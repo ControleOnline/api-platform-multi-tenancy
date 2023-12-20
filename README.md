@@ -19,6 +19,7 @@ config\packages\nelmio_cors.yaml
 imports:
     - { resource: "../vendor/controleonline/multi-tenancy/financial/services/multi-tenancy.yaml" }    
 ```
+```yaml
 nelmio_cors:
     defaults:
         origin_regex: true
@@ -29,3 +30,4 @@ nelmio_cors:
         max_age: 3600
     paths:
         '^/': ~
+```
