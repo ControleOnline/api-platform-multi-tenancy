@@ -9,7 +9,7 @@ config\services.yaml
 
 ```yaml
 imports:
-    - { resource: "../vendor/controleonline/multi-tenancy/financial/services/multi-tenancy.yaml" }    
+    - { resource: "../vendor/controleonline/multi-tenancy/config/config.yaml" }    
 ```
 
 Add a header on CORS:
