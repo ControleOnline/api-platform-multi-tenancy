@@ -40,7 +40,7 @@ class DatabaseSwitchListener
             //    //$this->connection->getEventManager()
             //);
             $this->connection->close();            
-            $this->connection = DriverManager::getConnection(self::$tenency_params, null, null, null, new $this->getPlatform(self::$tenency_params['driver']));
+            $this->connection = DriverManager::getConnection(self::$tenency_params, null, null, null, $this->getPlatform(self::$tenency_params['driver']));
             $this->connection->getDatabasePlatform()->registerDoctrineTypeMapping('geometry', 'string');
             $this->connection->connect();                
 
