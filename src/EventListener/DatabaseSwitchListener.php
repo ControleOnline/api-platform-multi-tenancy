@@ -39,8 +39,8 @@ class DatabaseSwitchListener
             //    //$this->connection->getConfiguration(),                
             //    //$this->connection->getEventManager()
             //);
-            $this->connection->close();
-            $this->connection = DriverManager::getConnection(self::$tenency_params);                    
+            $this->connection->close();            
+            $newConnection = DriverManager::getConnection(self::$tenency_params, null, null, null, new $this->getPlatform(self::$tenency_params['driver']));
             $this->connection->connect();                
 
             //$this->connection = $newConnection;
