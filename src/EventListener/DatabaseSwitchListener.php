@@ -42,8 +42,7 @@ class DatabaseSwitchListener
     private function getDbData()
     {
         if (self::$tenency_params)
-            return self::$tenency_params;
-
+            return;
         
         $params = $this->tenency_connection->getParams();
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
