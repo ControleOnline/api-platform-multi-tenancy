@@ -8,9 +8,7 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
-use Doctrine\DBAL\Configuration;
 use Doctrine\Common\EventManager;
-use Doctrine\DBAL\DriverManager;
 
 
 class DatabaseSwitchListener
@@ -21,16 +19,15 @@ class DatabaseSwitchListener
     private $platform;
     
 
-    public function __construct(Connection $connection,ContainerInterface $container)
+    public function __construct(Connection $connection)
     {
         $this->connection = $connection;        
     }
     public function onKernelRequest(RequestEvent $event)
     {                
-            if (!self::$tenency_params){
-                $this->getDomain($event->getRequest());
-                $this->getDbData();
-            }
+            if (!self::$tenency_params)
+                $this->getDbData($event->getRequest());
+            
             $this->connection->close();
             $this->connection->__construct(
                 self::$tenency_params,
@@ -41,10 +38,12 @@ class DatabaseSwitchListener
             $this->connection->connect();                            
     }
 
-    private function getDbData()
+    private function getDbData(Request $request)
     {
         if (self::$tenency_params)
             return;
+
+        $this->getDomain($request);
         
         $params = $this->connection->getParams();
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
