@@ -35,8 +35,8 @@ class DatabaseSwitchListener
             $this->connection->__construct(
                 self::$tenency_params,
                 $this->getDriverClass(),
-                //$this->connection->getConfiguration(),                
-                //$this->connection->getEventManager()
+                $this->connection->getConfiguration(),                
+                $this->connection->getEventManager()
             );            
             $this->connection->connect();                            
     }
