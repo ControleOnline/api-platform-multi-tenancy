@@ -32,13 +32,16 @@ class DatabaseSwitchListener
             }
 
             $this->connection->close();
-            $this->connection->__construct(
+        
+            $newConnection = new Connection(
                 self::$tenency_params,
                 $this->getDriverClass(),
                 $this->connection->getConfiguration(),
                 $this->connection->getEventManager()
-            );                    
-           $this->connection->connect();        
+            );
+            $newConnection->connect();        
+
+            $this->connection = $newConnection;
     }
 
     private function getDbData()
