@@ -19,7 +19,7 @@ class DatabaseSwitchListener
     {
         $this->tenency_connection = $connection;        
         if (!self::$tenency_database)
-            self::$tenency_database = $this->connection->getParams();
+            self::$tenency_database = $this->tenency_connection->getParams();
     }
 
     public function __destruct (){        
