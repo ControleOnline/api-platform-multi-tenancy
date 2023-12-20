@@ -6,6 +6,8 @@ use Doctrine\DBAL\Connection;
 use Exception;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpFoundation\Request;
+use Doctrine\DBAL\Platforms\SQLServerPlatform;
+use Doctrine\DBAL\Platforms\MySqlPlatform;
 
 
 class DatabaseSwitchListener
@@ -67,9 +69,11 @@ class DatabaseSwitchListener
         switch (self::$tenency_params['driver']) {
             case 'pdo_mysql':
                 $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
+                $this->connection->getDatabasePlatform()->setPlatform(new MySqlPlatform());
                 break;
             case 'pdo_sqlsrv':
                 $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
+                $this->connection->getDatabasePlatform()->setPlatform(new SQLServerPlatform());
                 break;
                 // Adicione outros casos conforme necessário para suportar outros drivers
             default:
