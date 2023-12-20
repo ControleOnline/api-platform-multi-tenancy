@@ -53,7 +53,7 @@ class DatabaseSwitchListener
     private function getDomain(Request $request)
     {
 
-        $this->domain = $request->get(
+        $this->domain = preg_replace("/[^a-zA-Z0-9.]/", "",str_replace('https://','',$request->get(
             'app-domain',
             $request->headers->get(
                 'app-domain',
@@ -62,7 +62,7 @@ class DatabaseSwitchListener
                     null
                 )
             )
-        );
+        )));
 
         if (!$this->domain)
             throw new Exception('Please define header or get param "app-domain"', 301);
