@@ -8,7 +8,8 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
-
+use Doctrine\DBAL\Configuration;
+use Doctrine\Common\EventManager;
 
 class DatabaseSwitchListener
 {
@@ -34,13 +35,15 @@ class DatabaseSwitchListener
             }
 
             $this->connection->close();
+            $eventManager = new EventManager();
+            $config = new Configuration();
+
         
             $newConnection = new Connection(
                 self::$tenency_params,
                 $this->getDriverClass(),
-                $this->connection->getConfiguration(),
-                $this->platform,
-                $this->connection->getEventManager()
+                $config, //$this->connection->getConfiguration(),                
+                $eventManager, //$this->connection->getEventManager()
             );
             $newConnection->connect();        
 
@@ -66,30 +69,39 @@ class DatabaseSwitchListener
         self::$tenency_params =  $params;        
     }
 
-    private function getDriverClass()
-    {
-        $driverClass = null;
-        $platform = null;
+private function getDriverClass()
+{
+    $driverClass = null;
 
-        // Verifique o valor do parâmetro 'driver'
-        switch (self::$tenency_params['driver']) {
-            case 'pdo_mysql':
-                $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
-                $this->platform = new MySqlPlatform();
-                break;
-            case 'pdo_sqlsrv':
-                $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
-                $this->platform = new SQLServerPlatform();
-                break;
-                // Adicione outros casos conforme necessário para suportar outros drivers
-            default:
-                throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
-        }
-
-        // Construa a instância do driver
-        return   new $driverClass(null, $this->platform);
+    // Verifique o valor do parâmetro 'driver'
+    switch (self::$tenency_params['driver']) {
+        case 'pdo_mysql':
+            $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
+            break;
+        case 'pdo_sqlsrv':
+            $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
+            break;
+            // Adicione outros casos conforme necessário para suportar outros drivers
+        default:
+            throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
     }
-    
+
+    // Construa a instância do driver
+    return new $driverClass();
+}
+
+private function getPlatform()
+{
+    switch (self::$tenency_params['driver']) {
+        case 'pdo_mysql':
+            return new MySqlPlatform();
+        case 'pdo_sqlsrv':
+            return new SQLServerPlatform();
+        // Adicione outros casos conforme necessário para suportar outros drivers
+        default:
+            throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
+    }
+}
     private function getDomain(Request $request)
     {
 
