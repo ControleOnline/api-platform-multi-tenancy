@@ -44,8 +44,8 @@ class DatabaseSwitchListener
         $params['dbname'] = $result['db_name'];
         $params['user'] = $result['db_user'];
         $params['password'] = $result['db_password'];
-        $params['driver'] = $result['driver'];
-        $params['instancename'] = $result['instancename'];        
+        $params['driver'] = $result['db_driver'];
+        $params['instancename'] = $result['db_instance'];        
 
         return $params;
     }
