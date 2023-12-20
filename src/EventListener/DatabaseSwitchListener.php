@@ -33,9 +33,9 @@ class DatabaseSwitchListener
                 $this->getDomain($event->getRequest());
                 $this->getDbData();     
             }
-            print_r(self::$tenency_params);
+            //print_r(self::$tenency_params);
             $this->connection->close();
-            $newConnection->__construct(
+            $this->connection->__construct(
                 self::$tenency_params,
                 $this->getDriverClass(),
                 //$this->connection->getConfiguration(),                
@@ -44,7 +44,7 @@ class DatabaseSwitchListener
             $newConnection->getDatabasePlatform();
             $newConnection->connect();        
 
-            $this->connection = $newConnection;
+            //$this->connection = $newConnection;
     }
 
     private function getDbData()
