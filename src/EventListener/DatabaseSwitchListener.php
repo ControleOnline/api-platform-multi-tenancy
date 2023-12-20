@@ -21,7 +21,7 @@ class DatabaseSwitchListener
     private $platform;
     
 
-    public function __construct(Connection $connection)
+    public function __construct(Connection $connection,ContainerInterface $container)
     {
         $this->connection = $connection;        
     }
@@ -31,20 +31,14 @@ class DatabaseSwitchListener
                 $this->getDomain($event->getRequest());
                 $this->getDbData();
             }
-            //print_r(self::$tenency_params);
-            //$this->connection->close();
-            //$this->connection->__construct(
-            //    self::$tenency_params,
-            //    $this->getDriverClass(),
-            //    //$this->connection->getConfiguration(),                
-            //    //$this->connection->getEventManager()
-            //);
-            $this->connection->close();            
-            $this->connection = DriverManager::getConnection(self::$tenency_params);
-            $this->connection->getDatabasePlatform()->registerDoctrineTypeMapping('geometry', 'string');
-            $this->connection->connect();                
-
-            //$this->connection = $newConnection;
+            $this->connection->close();
+            $this->connection->__construct(
+                self::$tenency_params,
+                $this->getDriverClass(),
+                //$this->connection->getConfiguration(),                
+                //$this->connection->getEventManager()
+            );            
+            $this->connection->connect();                            
     }
 
     private function getDbData()
