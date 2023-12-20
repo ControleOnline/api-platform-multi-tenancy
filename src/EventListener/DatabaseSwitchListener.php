@@ -36,18 +36,15 @@ class DatabaseSwitchListener
                 $this->getDbData();     
             }
             //print_r(self::$tenency_params);
+            //$this->connection->close();
+            //$this->connection->__construct(
+            //    self::$tenency_params,
+            //    $this->getDriverClass(),
+            //    //$this->connection->getConfiguration(),                
+            //    //$this->connection->getEventManager()
+            //);
+            $this->connection = DriverManager::getConnection(self::$tenency_params);        
             $this->connection->close();
-            $this->connection->__construct(
-                self::$tenency_params,
-                $this->getDriverClass(),
-                //$this->connection->getConfiguration(),                
-                //$this->connection->getEventManager()
-            );
-
-
-            //$this->connection = DriverManager::getConnection(self::$tenency_params);
-        
-            $this->connection->getDatabasePlatform();
             $this->connection->connect();        
         
 
