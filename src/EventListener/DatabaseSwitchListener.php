@@ -32,7 +32,7 @@ class DatabaseSwitchListener
             $this->connection->close();
             $this->connection->__construct(
                 self::$tenency_params,
-                $this->connection->getDriver(),
+                $this->getDriverClass(),
                 $this->connection->getConfiguration(),
                 $this->connection->getEventManager()
             );
@@ -59,6 +59,27 @@ class DatabaseSwitchListener
         self::$tenency_params =  $params;        
     }
 
+    private function getDriverClass()
+    {
+        $driverClass = null;
+
+        // Verifique o valor do parâmetro 'driver'
+        switch (self::$tenency_params['driver']) {
+            case 'pdo_mysql':
+                $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
+                break;
+            case 'pdo_sqlsrv':
+                $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
+                break;
+                // Adicione outros casos conforme necessário para suportar outros drivers
+            default:
+                throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
+        }
+
+        // Construa a instância do driver
+        return   new $driverClass;
+    }
+    
     private function getDomain(Request $request)
     {
 
