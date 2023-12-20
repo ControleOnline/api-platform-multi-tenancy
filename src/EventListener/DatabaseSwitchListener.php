@@ -20,7 +20,7 @@ class DatabaseSwitchListener
 
     public function onKernelRequest(RequestEvent $event)
     {
-        $this->domain = $this->getDomain($event->getRequest());
+        $this->getDomain($event->getRequest());
         $params = $this->getDbData();
 
         $this->connection->close();
