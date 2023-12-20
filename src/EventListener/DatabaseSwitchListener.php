@@ -41,8 +41,8 @@ class DatabaseSwitchListener
                 //$this->connection->getConfiguration(),                
                 //$this->connection->getEventManager()
             );
-            $newConnection->getDatabasePlatform();
-            $newConnection->connect();        
+            $this->connection->getDatabasePlatform();
+            $this->connection->connect();        
 
             //$this->connection = $newConnection;
     }
