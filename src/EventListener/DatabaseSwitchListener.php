@@ -17,16 +17,15 @@ class DatabaseSwitchListener
 
     public function __construct(Connection $connection)
     {
-        $this->tenency_connection = $connection;   
-        $this->getDbData();        
+        $this->tenency_connection = $connection;           
     }
 
 
 
     public function onKernelRequest(RequestEvent $event)
-    {
-        
+    {                
         if (!$this->connection){
+            $this->getDomain($event->getRequest());
             $this->connection = clone $this->tenency_connection;
             $this->connection->close();
             $this->connection->__construct(
@@ -44,7 +43,7 @@ class DatabaseSwitchListener
         if (self::$tenency_params)
             return self::$tenency_params;
 
-        $this->getDomain($event->getRequest());
+        
         $params = $this->tenency_connection->getParams();
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->tenency_connection->executeQuery($sql, ['app_host' => $this->domain]);
