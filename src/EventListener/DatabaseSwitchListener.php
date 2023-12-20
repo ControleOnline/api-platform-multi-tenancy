@@ -17,7 +17,8 @@ class DatabaseSwitchListener
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        self::$tenency_database = $this->connection->getParams();
+        if (!self::$tenency_database)
+            self::$tenency_database = $this->connection->getParams();
     }
 
     public function onKernelRequest(RequestEvent $event)
