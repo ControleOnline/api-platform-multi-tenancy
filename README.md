@@ -16,10 +16,6 @@ Add a header on CORS:
 config\packages\nelmio_cors.yaml
 
 ```yaml
-imports:
-    - { resource: "../vendor/controleonline/multi-tenancy/financial/services/multi-tenancy.yaml" }    
-```
-```yaml
 nelmio_cors:
     defaults:
         origin_regex: true
