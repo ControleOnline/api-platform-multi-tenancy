@@ -12,10 +12,12 @@ class DatabaseSwitchListener
 {
     private $connection;
     private $domain;
+    private static $tenency_database;
 
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
+        self::$tenency_database = $this->connection->getParams();
     }
 
     public function onKernelRequest(RequestEvent $event)
@@ -35,7 +37,7 @@ class DatabaseSwitchListener
 
     private function getDbData()
     {
-        $params = $this->connection->getParams();
+        $params = self::$tenency_database;
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
         $result = $statement->fetchAssociative();
