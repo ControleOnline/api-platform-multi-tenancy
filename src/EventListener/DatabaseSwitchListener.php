@@ -38,6 +38,7 @@ class DatabaseSwitchListener
                 $this->connection->getConfiguration(),
                 $this->connection->getEventManager()
             );                    
+           $this->connection->connect();        
     }
 
     private function getDbData()
