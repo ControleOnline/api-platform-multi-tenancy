@@ -37,9 +37,7 @@ class DatabaseSwitchListener
                 $this->getDriverClass(),
                 $this->connection->getConfiguration(),
                 $this->connection->getEventManager()
-            );
-            //$this->connection->connect();
-        
+            );                    
     }
 
     private function getDbData()
@@ -64,6 +62,7 @@ class DatabaseSwitchListener
     private function getDriverClass()
     {
         $driverClass = null;
+        $platform = null;
 
         // Verifique o valor do parâmetro 'driver'
         switch (self::$tenency_params['driver']) {
