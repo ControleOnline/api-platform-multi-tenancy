@@ -33,7 +33,7 @@ class DatabaseSwitchListener
                 $this->getDomain($event->getRequest());
                 $this->getDbData();     
             }
-
+            print_r(self::$tenency_params);
             $this->connection->close();
             $newConnection = new Connection(
                 self::$tenency_params,
