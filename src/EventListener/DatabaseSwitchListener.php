@@ -15,11 +15,13 @@ class DatabaseSwitchListener
     private $connection;
     private $domain;
     private static $tenency_params;
+    private $platform;
     
 
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
+        
     }
 
 
@@ -37,6 +39,7 @@ class DatabaseSwitchListener
                 self::$tenency_params,
                 $this->getDriverClass(),
                 $this->connection->getConfiguration(),
+                $this->platform,
                 $this->connection->getEventManager()
             );
             $newConnection->connect();        
@@ -72,11 +75,11 @@ class DatabaseSwitchListener
         switch (self::$tenency_params['driver']) {
             case 'pdo_mysql':
                 $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
-                $platform = new MySqlPlatform();
+                $this->platform = new MySqlPlatform();
                 break;
             case 'pdo_sqlsrv':
                 $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
-                $platform = new SQLServerPlatform();
+                $this->platform = new SQLServerPlatform();
                 break;
                 // Adicione outros casos conforme necessário para suportar outros drivers
             default:
@@ -84,7 +87,7 @@ class DatabaseSwitchListener
         }
 
         // Construa a instância do driver
-        return   new $driverClass(null, $platform);
+        return   new $driverClass(null, $this->platform);
     }
     
     private function getDomain(Request $request)
