@@ -35,7 +35,7 @@ class DatabaseSwitchListener
             }
             print_r(self::$tenency_params);
             $this->connection->close();
-            $newConnection = new Connection(
+            $newConnection->__construct(
                 self::$tenency_params,
                 $this->getDriverClass(),
                 //$this->connection->getConfiguration(),                
