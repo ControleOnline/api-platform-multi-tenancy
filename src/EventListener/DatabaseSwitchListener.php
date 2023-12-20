@@ -36,7 +36,7 @@ class DatabaseSwitchListener
     private function getDbData()
     {
         $params = $this->connection->getParams();
-        $sql = 'SELECT db_host, db_name, db_port, db_user, db_password FROM `databases` WHERE app_host = :app_host';
+        $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
         $result = $statement->fetchAssociative();
         $params['host'] = $result['db_host'];
@@ -44,6 +44,8 @@ class DatabaseSwitchListener
         $params['dbname'] = $result['db_name'];
         $params['user'] = $result['db_user'];
         $params['password'] = $result['db_password'];
+        $params['driver'] = $result['driver'];
+        $params['instancename'] = $result['instancename'];        
 
         return $params;
     }
