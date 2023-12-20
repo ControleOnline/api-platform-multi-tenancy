@@ -76,9 +76,4 @@ class DatabaseSwitchListener
         if (!$this->domain)
             throw new Exception('Please define header or get param "app-domain"', 301);
     }
-
-    public function __destruct (){        
-        self::$tenency_connection->close();
-    }
-    
 }
