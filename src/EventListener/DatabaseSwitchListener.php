@@ -40,7 +40,8 @@ class DatabaseSwitchListener
             //    //$this->connection->getEventManager()
             //);
             $this->connection->close();            
-            $newConnection = DriverManager::getConnection(self::$tenency_params, null, null, null, new $this->getPlatform(self::$tenency_params['driver']));
+            $this->connection = DriverManager::getConnection(self::$tenency_params, null, null, null, new $this->getPlatform(self::$tenency_params['driver']));
+            $this->connection->getDatabasePlatform()->registerDoctrineTypeMapping('geometry', 'string');
             $this->connection->connect();                
 
             //$this->connection = $newConnection;
@@ -55,7 +56,7 @@ class DatabaseSwitchListener
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
         $result = $statement->fetchAssociative();
-        //$params['platform'] = $this->getPlatform($result['db_driver']);
+        $params['platform'] = $this->getPlatform($result['db_driver']);
         $params['host'] = $result['db_host'];
         $params['port'] = $result['db_port'];
         $params['dbname'] = $result['db_name'];
