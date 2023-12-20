@@ -26,6 +26,7 @@ class DatabaseSwitchListener
     {                
         if (!$this->connection){
             $this->getDomain($event->getRequest());
+            $this->getDbData();
             $this->connection = clone $this->tenency_connection;
             $this->connection->close();
             $this->connection->__construct(
