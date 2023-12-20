@@ -13,21 +13,22 @@ class DatabaseSwitchListener
     private $connection;
     private $domain;
     private static $tenency_params;
-    private $tenency_connection;
+    
 
     public function __construct(Connection $connection)
     {
-        $this->tenency_connection = $connection;           
+        $this->connection = $connection;
     }
 
 
 
     public function onKernelRequest(RequestEvent $event)
     {                
-        if (!$this->connection){
-            $this->getDomain($event->getRequest());
-            $this->getDbData();
-            $this->connection = clone $this->tenency_connection;
+            if (!self::$tenency_params){
+                $this->getDomain($event->getRequest());
+                $this->getDbData();     
+            }
+
             $this->connection->close();
             $this->connection->__construct(
                 self::$tenency_params,
@@ -36,7 +37,7 @@ class DatabaseSwitchListener
                 $this->connection->getEventManager()
             );
             $this->connection->connect();
-        }
+        
     }
 
     private function getDbData()
@@ -44,9 +45,9 @@ class DatabaseSwitchListener
         if (self::$tenency_params)
             return;
         
-        $params = $this->tenency_connection->getParams();
+        $params = $this->connection->getParams();
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
-        $statement = $this->tenency_connection->executeQuery($sql, ['app_host' => $this->domain]);
+        $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
         $result = $statement->fetchAssociative();
         $params['host'] = $result['db_host'];
         $params['port'] = $result['db_port'];
@@ -55,7 +56,7 @@ class DatabaseSwitchListener
         $params['password'] = $result['db_password'];
         $params['driver'] = $result['db_driver'];
         $params['instancename'] = $result['db_instance'];        
-        self::$tenency_params =  $params;
+        self::$tenency_params =  $params;        
     }
 
     private function getDomain(Request $request)
@@ -77,7 +78,7 @@ class DatabaseSwitchListener
     }
 
     public function __destruct (){        
-        $this->tenency_connection->close();
+        self::$tenency_connection->close();
     }
     
 }
