@@ -10,6 +10,8 @@ use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Configuration;
 use Doctrine\Common\EventManager;
+use Doctrine\DBAL\DriverManager;
+
 
 class DatabaseSwitchListener
 {
@@ -41,8 +43,13 @@ class DatabaseSwitchListener
                 //$this->connection->getConfiguration(),                
                 //$this->connection->getEventManager()
             );
+
+
+            //$this->connection = DriverManager::getConnection(self::$tenency_params);
+        
             $this->connection->getDatabasePlatform();
             $this->connection->connect();        
+        
 
             //$this->connection = $newConnection;
     }
