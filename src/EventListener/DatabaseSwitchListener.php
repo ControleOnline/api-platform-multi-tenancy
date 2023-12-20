@@ -13,12 +13,17 @@ class DatabaseSwitchListener
     private $connection;
     private $domain;
     private static $tenency_database;
+    private $tenency_connection;
 
     public function __construct(Connection $connection)
     {
-        $this->connection = $connection;
+        $this->tenency_connection = $connection;        
         if (!self::$tenency_database)
             self::$tenency_database = $this->connection->getParams();
+    }
+
+    public function __destruct (){        
+        $this->tenency_connection->close();
     }
 
     public function onKernelRequest(RequestEvent $event)
@@ -26,21 +31,25 @@ class DatabaseSwitchListener
         $this->getDomain($event->getRequest());
         $params = $this->getDbData();
 
-        $this->connection->close();
-        $this->connection->__construct(
-            $params,
-            $this->connection->getDriver(),
-            $this->connection->getConfiguration(),
-            $this->connection->getEventManager()
-        );
-        $this->connection->connect();
+
+        if (!$this->connection){
+            $this->connection = clone $this->tenency_connection;
+            $this->connection->close();
+            $this->connection->__construct(
+                $params,
+                $this->connection->getDriver(),
+                $this->connection->getConfiguration(),
+                $this->connection->getEventManager()
+            );
+            $this->connection->connect();
+        }
     }
 
     private function getDbData()
     {
         $params = self::$tenency_database;
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
-        $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
+        $statement = $this->tenency_connection->executeQuery($sql, ['app_host' => $this->domain]);
         $result = $statement->fetchAssociative();
         $params['host'] = $result['db_host'];
         $params['port'] = $result['db_port'];
