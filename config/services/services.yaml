@@ -1,0 +1,14 @@
+services:
+    ControleOnline\:
+        resource: "../../src/*"
+        exclude: "../src/{DependencyInjection,Entity,Resource,Migrations,Library,Tests,Kernel.php}"
+    ControleOnline\Repository\:
+        resource: "../../src/Repository"
+        tags: ["doctrine.repository_service"]
+        arguments:
+            $registry: '@doctrine'        
+    ControleOnline\EventListener\DatabaseSwitchListener:
+        arguments:
+            $connection: '@doctrine.dbal.default_connection'
+        tags:
+            - { name: 'kernel.event_listener', event: 'kernel.request', method: 'onKernelRequest', priority: 512 }            

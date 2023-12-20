@@ -1,0 +1,8 @@
+api_platform:
+    mapping:
+        paths:
+            [
+                "%kernel.project_dir%/vendor/controleonline/multi-tenancy/src/Entity",
+                "%kernel.project_dir%/vendor/controleonline/multi-tenancy/src/Resource",
+            ]
+    
