@@ -35,15 +35,11 @@ class DatabaseSwitchListener
             }
 
             $this->connection->close();
-            $eventManager = new EventManager();
-            $config = new Configuration();
-
-        
             $newConnection = new Connection(
                 self::$tenency_params,
                 $this->getDriverClass(),
-                $config, //$this->connection->getConfiguration(),                
-                $eventManager, //$this->connection->getEventManager()
+                $this->connection->getConfiguration(),                
+                $this->connection->getEventManager()
             );
             $newConnection->connect();        
 
@@ -59,6 +55,7 @@ class DatabaseSwitchListener
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
         $result = $statement->fetchAssociative();
+        $params['platform'] = $this->getPlatform($result['db_driver']);
         $params['host'] = $result['db_host'];
         $params['port'] = $result['db_port'];
         $params['dbname'] = $result['db_name'];
@@ -90,16 +87,16 @@ private function getDriverClass()
     return new $driverClass();
 }
 
-private function getPlatform()
+private function getPlatform($db_driver)
 {
-    switch (self::$tenency_params['driver']) {
+    switch ($db_driver) {
         case 'pdo_mysql':
             return new MySqlPlatform();
         case 'pdo_sqlsrv':
             return new SQLServerPlatform();
         // Adicione outros casos conforme necessário para suportar outros drivers
         default:
-            throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
+            throw new \InvalidArgumentException('Driver not supported: ' . $db_driver);
     }
 }
     private function getDomain(Request $request)
