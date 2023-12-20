@@ -23,17 +23,13 @@ class DatabaseSwitchListener
 
     public function __construct(Connection $connection)
     {
-        $this->connection = $connection;
-        
+        $this->connection = $connection;        
     }
-
-
-
     public function onKernelRequest(RequestEvent $event)
     {                
             if (!self::$tenency_params){
                 $this->getDomain($event->getRequest());
-                $this->getDbData();     
+                $this->getDbData();
             }
             //print_r(self::$tenency_params);
             //$this->connection->close();
@@ -43,10 +39,9 @@ class DatabaseSwitchListener
             //    //$this->connection->getConfiguration(),                
             //    //$this->connection->getEventManager()
             //);
-            $this->connection = DriverManager::getConnection(self::$tenency_params);        
             $this->connection->close();
-            $this->connection->connect();        
-        
+            $this->connection = DriverManager::getConnection(self::$tenency_params);                    
+            $this->connection->connect();                
 
             //$this->connection = $newConnection;
     }
