@@ -58,17 +58,8 @@ class DatabaseSwitchListener
             $request->headers->get(
                 'app-domain',
                 $request->headers->get(
-                    'domain',
-                    $request->headers->get(
-                        'Domain',
-                            $request->headers->get(
-                                'Referer',
-                                        $request->headers->get(
-                                        'referer',
-                                        null
-                                    )
-                        )
-                    )
+                    'referer',
+                    null
                 )
             )
         );
