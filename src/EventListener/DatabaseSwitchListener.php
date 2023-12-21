@@ -17,25 +17,25 @@ class DatabaseSwitchListener
     private $domain;
     private static $tenency_params;
     private $platform;
-    
+
 
     public function __construct(Connection $connection)
     {
-        $this->connection = $connection;        
+        $this->connection = $connection;
     }
     public function onKernelRequest(RequestEvent $event)
-    {                
-            if (!self::$tenency_params)
-                $this->getDbData($event->getRequest());
-            
-            $this->connection->close();
-            $this->connection->__construct(
-                self::$tenency_params,
-                $this->getDriverClass(),
-                $this->connection->getConfiguration(),                
-                $this->connection->getEventManager()
-            );            
-            $this->connection->connect();                            
+    {
+        if (!self::$tenency_params)
+            $this->getDbData($event->getRequest());
+
+        $this->connection->close();
+        $this->connection->__construct(
+            self::$tenency_params,
+            $this->getDriverClass(),
+            $this->connection->getConfiguration(),
+            $this->connection->getEventManager()
+        );
+        $this->connection->connect();
     }
 
     private function getDbData(Request $request)
@@ -44,10 +44,11 @@ class DatabaseSwitchListener
             return;
 
         $this->getDomain($request);
-        
+
         $params = $this->connection->getParams();
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->connection->executeQuery($sql, ['app_host' => $this->domain]);
+
         $result = $statement->fetchAssociative();
         $params['platform'] = $this->getPlatform($result['db_driver']);
         $params['host'] = $result['db_host'];
@@ -56,56 +57,60 @@ class DatabaseSwitchListener
         $params['user'] = $result['db_user'];
         $params['password'] = $result['db_password'];
         $params['driver'] = $result['db_driver'];
-        $params['instancename'] = $result['db_instance'];        
-        self::$tenency_params =  $params;        
+        $params['instancename'] = $result['db_instance'];
+        self::$tenency_params =  $params;
     }
 
-private function getDriverClass()
-{
-    $driverClass = null;
+    private function getDriverClass()
+    {
+        $driverClass = null;
 
-    // Verifique o valor do parâmetro 'driver'
-    switch (self::$tenency_params['driver']) {
-        case 'pdo_mysql':
-            $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
-            break;
-        case 'pdo_sqlsrv':
-            $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
-            break;
-            // Adicione outros casos conforme necessário para suportar outros drivers
-        default:
-            throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
+        // Verifique o valor do parâmetro 'driver'
+        switch (self::$tenency_params['driver']) {
+            case 'pdo_mysql':
+                $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
+                break;
+            case 'pdo_sqlsrv':
+                $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
+                break;
+                // Adicione outros casos conforme necessário para suportar outros drivers
+            default:
+                throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
+        }
+
+        // Construa a instância do driver
+        return new $driverClass();
     }
 
-    // Construa a instância do driver
-    return new $driverClass();
-}
-
-private function getPlatform($db_driver)
-{
-    switch ($db_driver) {
-        case 'pdo_mysql':
-            return new MySqlPlatform();
-        case 'pdo_sqlsrv':
-            return new SQLServerPlatform();
-        // Adicione outros casos conforme necessário para suportar outros drivers
-        default:
-            throw new \InvalidArgumentException('Driver not supported: ' . $db_driver);
+    private function getPlatform($db_driver)
+    {
+        switch ($db_driver) {
+            case 'pdo_mysql':
+                return new MySqlPlatform();
+            case 'pdo_sqlsrv':
+                return new SQLServerPlatform();
+                // Adicione outros casos conforme necessário para suportar outros drivers
+            default:
+                throw new \InvalidArgumentException('Driver not supported: ' . $db_driver);
+        }
     }
-}
     private function getDomain(Request $request)
     {
 
-        $this->domain = preg_replace("/[^a-zA-Z0-9.]/", "",str_replace('https://','',$request->get(
-            'app-domain',
-            $request->headers->get(
+        $this->domain = preg_replace("/[^a-zA-Z0-9.:]/", "", str_replace(
+            ['https://', 'https://'],
+            '',
+            $request->get(
                 'app-domain',
                 $request->headers->get(
-                    'referer',
-                    null
+                    'app-domain',
+                    $request->headers->get(
+                        'referer',
+                        null
+                    )
                 )
             )
-        )));
+        ));
 
         if (!$this->domain)
             throw new Exception('Please define header or get param "app-domain"', 301);
