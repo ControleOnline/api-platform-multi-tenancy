@@ -3,13 +3,12 @@
 namespace ControleOnline\EventListener;
 
 use Doctrine\DBAL\Connection;
-use Exception;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
-use Doctrine\Common\EventManager;
-
+use Exception;
+use InvalidArgumentException;
 
 class DatabaseSwitchListener
 {
@@ -25,17 +24,21 @@ class DatabaseSwitchListener
     }
     public function onKernelRequest(RequestEvent $event)
     {
-        if (!self::$tenency_params)
-            $this->getDbData($event->getRequest());
+        try {
+            if (!self::$tenency_params)
+                $this->getDbData($event->getRequest());
 
-        $this->connection->close();
-        $this->connection->__construct(
-            self::$tenency_params,
-            $this->getDriverClass(),
-            $this->connection->getConfiguration(),
-            $this->connection->getEventManager()
-        );
-        $this->connection->connect();
+            $this->connection->close();
+            $this->connection->__construct(
+                self::$tenency_params,
+                $this->getDriverClass(),
+                $this->connection->getConfiguration(),
+                $this->connection->getEventManager()
+            );
+            $this->connection->connect();
+        } catch (Exception $e) {
+            throw new Exception(sprintf('Domain (%s) not found', $this->domain), 1);
+        }
     }
 
     private function getDbData(Request $request)
@@ -75,7 +78,7 @@ class DatabaseSwitchListener
                 break;
                 // Adicione outros casos conforme necessário para suportar outros drivers
             default:
-                throw new \InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
+                throw new InvalidArgumentException('Driver not supported: ' . self::$tenency_params['driver']);
         }
 
         // Construa a instância do driver
@@ -91,14 +94,14 @@ class DatabaseSwitchListener
                 return new SQLServerPlatform();
                 // Adicione outros casos conforme necessário para suportar outros drivers
             default:
-                throw new \InvalidArgumentException('Driver not supported: ' . $db_driver);
+                throw new InvalidArgumentException('Driver not supported: ' . $db_driver);
         }
     }
     private function getDomain(Request $request)
     {
 
         $this->domain = preg_replace("/[^a-zA-Z0-9.:]/", "", str_replace(
-            ['https://', 'https://'],
+            ['https://', 'http://'],
             '',
             $request->get(
                 'app-domain',
@@ -113,6 +116,6 @@ class DatabaseSwitchListener
         ));
 
         if (!$this->domain)
-            throw new Exception('Please define header or get param "app-domain"', 301);
+            throw new InvalidArgumentException('Please define header or get param "app-domain"', 301);
     }
 }
