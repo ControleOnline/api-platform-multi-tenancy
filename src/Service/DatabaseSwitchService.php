@@ -1,13 +1,11 @@
 <?php
 
-namespace ControleOnline\EventListener;
+namespace ControleOnline\Service;
 
 use Doctrine\DBAL\Connection;
-use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
-use Exception;
 use InvalidArgumentException;
 
 class DatabaseSwitchService
