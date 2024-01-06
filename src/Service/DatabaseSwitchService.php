@@ -77,8 +77,6 @@ class DatabaseSwitchService
     private function getDriverClass($dbData)
     {
         $driverClass = null;
-
-        // Verifique o valor do parâmetro 'driver'
         switch ($dbData['driver']) {
             case 'pdo_mysql':
                 $driverClass = \Doctrine\DBAL\Driver\PDO\MySql\Driver::class;
@@ -86,7 +84,6 @@ class DatabaseSwitchService
             case 'pdo_sqlsrv':
                 $driverClass = \Doctrine\DBAL\Driver\PDO\SQLSrv\Driver::class;
                 break;
-                // Adicione outros casos conforme necessário para suportar outros drivers
             default:
                 throw new InvalidArgumentException('Driver not supported: ' . $dbData['driver']);
         }
@@ -102,7 +99,6 @@ class DatabaseSwitchService
                 return new MySqlPlatform();
             case 'pdo_sqlsrv':
                 return new SQLServerPlatform();
-                // Adicione outros casos conforme necessário para suportar outros drivers
             default:
                 throw new InvalidArgumentException('Driver not supported: ' . $db_driver);
         }
