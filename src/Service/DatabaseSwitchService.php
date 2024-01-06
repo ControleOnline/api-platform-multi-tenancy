@@ -31,15 +31,16 @@ class DatabaseSwitchService
 
     private function switchDatabase($dbData)
     {
-        if ($this->connection->isConnected()) {
+        if ($this->connection->isConnected())
             $this->connection->close();
-        }
+
         $this->connection->__construct(
             $dbData,
             $this->getDriverClass($dbData),
             $this->connection->getConfiguration(),
             $this->connection->getEventManager()
         );
+        
         $this->connection->connect();
         return  $dbData;
     }

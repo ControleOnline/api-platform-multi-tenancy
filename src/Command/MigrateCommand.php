@@ -72,22 +72,15 @@ final class MigrateCommand extends Command
 
     protected function migrateByDomain($domain, InputInterface $input, OutputInterface $output)
     {
-        $this->databaseSwitchService->switchDatabaseByDomain(
-            $domain
-        );
+        $this->databaseSwitchService->switchDatabaseByDomain($domain);
+
         $newInput = new ArrayInput([
             'version' => $input->getArgument('version'),
             '--dry-run' => $input->getOption('dry-run'),
         ]);
         $newInput->setInteractive(false);
-        $application = $this->getApplication();
-        if (null === $application) {
-            throw new \RuntimeException('Não foi possível obter a aplicação Console.');
-        }
 
-        $command = $application->find('doctrine:migrations:migrate');
-        $returnCode = $command->run($newInput, $output);
-
-        return $returnCode;
+        $command = $this->getApplication()->find('doctrine:migrations:migrate');
+        return  $command->run($newInput, $output);
     }
 }
