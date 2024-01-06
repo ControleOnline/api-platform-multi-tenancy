@@ -2,7 +2,7 @@
 
 namespace ControleOnline\Command;
 
-use ControleOnline\EventListener\DatabaseSwitchService;
+use ControleOnline\Service\DatabaseSwitchService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
