@@ -10,8 +10,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Migrations\Tools\Console\Command\MigrateCommand as Migrate;
-use Symfony\Component\Console\Application;
 
 #[AsCommand(
     name: 'tenant:migrations:migrate',
@@ -21,12 +19,10 @@ final class MigrateCommand extends Command
 {
 
     private $em;
-    private $application;
 
-    public function __construct(EntityManagerInterface $entityManager, Application $application)
+    public function __construct(EntityManagerInterface $entityManager)
     {
         $this->em = $entityManager;
-        $this->application = $application;
         parent::__construct();
     }
 
@@ -50,12 +46,20 @@ final class MigrateCommand extends Command
             '--dry-run' => $input->getOption('dry-run'),
             '--query-time' => $input->getOption('query-time'),
             '--allow-no-migration' => $input->getOption('allow-no-migration'),
+            // Inclua outros argumentos e opções necessários aqui
         ]);
-        $newInput->setInteractive($input->isInteractive());
-        // Encontra e executa o comando de migração do Doctrine
-        $command = $this->application->find('doctrine:migrations:migrate');
-        $command->run($newInput, $output);
 
-        return Command::SUCCESS;
+        $newInput->setInteractive($input->isInteractive());
+
+        // Obtenha a aplicação Console e execute o comando de migração
+        $application = $this->getApplication();
+        if (null === $application) {
+            throw new \RuntimeException('Não foi possível obter a aplicação Console.');
+        }
+
+        $command = $application->find('doctrine:migrations:migrate');
+        $returnCode = $command->run($newInput, $output);
+
+        return $returnCode;
     }
 }
