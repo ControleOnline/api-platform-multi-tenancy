@@ -48,6 +48,9 @@ final class MigrateCommand extends Command
         $domains = $this->databaseSwitchService->getAllDomains();
 
         foreach ($domains as $domain) {
+            /**
+             * @todo change to migrateByDomain method
+             */
             $this->executemigration($domain, $input, $output);
         }
 
