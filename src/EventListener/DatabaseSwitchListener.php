@@ -2,6 +2,7 @@
 
 namespace ControleOnline\EventListener;
 
+use ControleOnline\Service\DatabaseSwitchService;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Exception;
 
