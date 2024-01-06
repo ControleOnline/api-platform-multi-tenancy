@@ -24,6 +24,7 @@ class DatabaseSwitchService
     {
         $this->switchDatabase($this->getDbData($domain));
     }
+    
     public function switchBackToOriginalDatabase()
     {
         $this->switchDatabase(self::$originalDbParams);
@@ -42,7 +43,6 @@ class DatabaseSwitchService
         );
         
         $this->connection->connect();
-        return  $dbData;
     }
 
     private function getDbData($domain)
