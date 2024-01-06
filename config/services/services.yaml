@@ -12,11 +12,11 @@ services:
             $connection: '@doctrine.dbal.default_connection'
     ControleOnline\EventListener\DatabaseSwitchListener:
         arguments:
-            $DatabaseSwitchService: '@ControleOnline\EventListener\DatabaseSwitchService'
+            $DatabaseSwitchService: '@ControleOnline\Service\DatabaseSwitchService'
         tags:
             - { name: 'kernel.event_listener', event: 'kernel.request', method: 'onKernelRequest', priority: 512 }
     ControleOnline\Command\MigrateCommand:
         arguments:
-            $DatabaseSwitchService: '@ControleOnline\EventListener\DatabaseSwitchService'
+            $DatabaseSwitchService: '@ControleOnline\Service\DatabaseSwitchService'
         tags:
             - { name: 'console.command' }
