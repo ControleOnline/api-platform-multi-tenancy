@@ -7,7 +7,7 @@ services:
         tags: ["doctrine.repository_service"]
         arguments:
             $registry: '@doctrine'        
-    ControleOnline\EventListener\DatabaseSwitchService:
+    ControleOnline\Service\DatabaseSwitchService:
         arguments:
             $connection: '@doctrine.dbal.default_connection'
     ControleOnline\EventListener\DatabaseSwitchListener:
