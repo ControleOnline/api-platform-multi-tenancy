@@ -32,30 +32,39 @@ final class MigrateCommand extends Command
             ->setName('tenant:migrations:migrate')
             ->setAliases(['t:m:m'])
             ->setDescription('Proxy to launch doctrine:migrations:migrate for specific database .')
-            ->addArgument('domain', InputArgument::REQUIRED, 'Database Domain Identifier')
+            ->addArgument('domain', InputArgument::OPTIONAL, 'Database Domain Identifier')
             ->addArgument('version', InputArgument::OPTIONAL, 'The version number (YYYYMMDDHHMMSS) or alias (first, prev, next, latest) to migrate to.', 'latest')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Execute the migration as a dry run.')
             ->addOption('query-time', null, InputOption::VALUE_NONE, 'Time all the queries individually.')
             ->addOption('allow-no-migration', null, InputOption::VALUE_NONE, 'Do not throw an exception when no changes are detected.');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $domains =  $input->getArgument('domain');
+
+        if (empty($domains))
+            $domains = [];
+
+        foreach ($domains as $domain) {
+            $this->migrateByDomain($domain, $input, $output);
+        }
+
+        return 1;
+    }
+
+    protected function migrateByDomain($domain, InputInterface $input, OutputInterface $output)
     {
         $this->databaseSwitchService->switchDatabaseByDomain(
-            $input->getArgument('domain')
+            $domain
         );
-
         $newInput = new ArrayInput([
             'version' => $input->getArgument('version'),
             '--dry-run' => $input->getOption('dry-run'),
             '--query-time' => $input->getOption('query-time'),
             '--allow-no-migration' => $input->getOption('allow-no-migration'),
-            // Inclua outros argumentos e opções necessários aqui
         ]);
-
         $newInput->setInteractive($input->isInteractive());
-
-        // Obtenha a aplicação Console e execute o comando de migração
         $application = $this->getApplication();
         if (null === $application) {
             throw new \RuntimeException('Não foi possível obter a aplicação Console.');
