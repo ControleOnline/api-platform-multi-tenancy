@@ -44,7 +44,7 @@ final class MigrateCommand extends Command
         $domains =  $input->getArgument('domain');
 
         if (empty($domains))
-            $domains = [];
+            $domains = $this->databaseSwitchService->getAllDomains();
 
         foreach ($domains as $domain) {
             $this->migrateByDomain($domain, $input, $output);

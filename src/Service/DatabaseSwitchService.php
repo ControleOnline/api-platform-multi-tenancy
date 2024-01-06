@@ -19,7 +19,7 @@ class DatabaseSwitchService
 
     public function switchDatabaseByDomain($domain)
     {
-        $dbData =     $this->getDbData($domain);
+        $dbData = $this->getDbData($domain);
         $this->connection->close();
         $this->connection->__construct(
             $dbData,
@@ -47,6 +47,15 @@ class DatabaseSwitchService
         $params['driver'] = $result['db_driver'];
         $params['instancename'] = $result['db_instance'];
         return  $params;
+    }
+
+    public function getAllDomains()
+    {
+        $sql = 'SELECT app_host FROM `databases`';
+        $statement = $this->connection->executeQuery($sql);
+        $results = $statement->fetchAllAssociative();
+        $domains = array_column($results, 'app_host');
+        return $domains;
     }
 
     private function getDriverClass($dbData)
