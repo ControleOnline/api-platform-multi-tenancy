@@ -11,16 +11,29 @@ use InvalidArgumentException;
 class DatabaseSwitchService
 {
     private $connection;
+    private static $originalDbParams;
 
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
+        if (!self::$originalDbParams)
+            self::$originalDbParams = $connection->getParams();
     }
 
     public function switchDatabaseByDomain($domain)
     {
-        $dbData = $this->getDbData($domain);
-        $this->connection->close();
+        $this->switchDatabase($this->getDbData($domain));
+    }
+    public function switchBackToOriginalDatabase()
+    {
+        $this->switchDatabase(self::$originalDbParams);
+    }
+
+    private function switchDatabase($dbData)
+    {
+        if ($this->connection->isConnected()) {
+            $this->connection->close();
+        }
         $this->connection->__construct(
             $dbData,
             $this->getDriverClass($dbData),
@@ -33,6 +46,7 @@ class DatabaseSwitchService
 
     private function getDbData($domain)
     {
+        $this->switchBackToOriginalDatabase();
         $params = $this->connection->getParams();
         $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
         $statement = $this->connection->executeQuery($sql, ['app_host' => $domain]);
@@ -51,6 +65,7 @@ class DatabaseSwitchService
 
     public function getAllDomains()
     {
+        $this->switchBackToOriginalDatabase();
         $sql = 'SELECT app_host FROM `databases`';
         $statement = $this->connection->executeQuery($sql);
         $results = $statement->fetchAllAssociative();
