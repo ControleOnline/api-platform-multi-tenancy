@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Migrations\Tools\Console\Command\MigrateCommand as Migrate;
+use Symfony\Component\Console\Application;
 
 #[AsCommand(
     name: 'tenant:migrations:migrate',
@@ -19,10 +20,14 @@ use Doctrine\Migrations\Tools\Console\Command\MigrateCommand as Migrate;
 final class MigrateCommand extends Command
 {
 
-    protected $em;
-    public function __construct(EntityManagerInterface $entityManager)
+    private $em;
+    private $application;
+
+    public function __construct(EntityManagerInterface $entityManager, Application $application)
     {
-        $this->em     = $entityManager;
+        $this->em = $entityManager;
+        $this->application = $application;
+        parent::__construct();
     }
 
     protected function configure(): void
@@ -47,9 +52,10 @@ final class MigrateCommand extends Command
             '--allow-no-migration' => $input->getOption('allow-no-migration'),
         ]);
         $newInput->setInteractive($input->isInteractive());
-        $otherCommand = new Migrate();
-        $otherCommand->run($newInput, $output);
+        // Encontra e executa o comando de migração do Doctrine
+        $command = $this->application->find('doctrine:migrations:migrate');
+        $command->run($newInput, $output);
 
-        return 0;
+        return Command::SUCCESS;
     }
 }

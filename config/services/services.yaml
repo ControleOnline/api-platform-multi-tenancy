@@ -15,5 +15,6 @@ services:
     ControleOnline\Command\MigrateCommand:
         arguments:
             $entityManager: '@doctrine.orm.entity_manager'
+            $application: '@console.application'
         tags:
             - { name: 'console.command' }
