@@ -107,7 +107,7 @@ class DatabaseSwitchService
     public function getDomain(Request $request)
     {
 
-        $domain = preg_replace("/[^a-zA-Z0-9.:]/", "", str_replace(
+        $domain = preg_replace("/[^a-zA-Z0-9.:_-]/", "", str_replace(
             ['https://', 'http://'],
             '',
             $request->get(
