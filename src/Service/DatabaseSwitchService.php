@@ -4,7 +4,7 @@ namespace ControleOnline\Service;
 
 use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Request;
-use Doctrine\DBAL\Platforms\SQLServerPlatform;
+use Doctrine\DBAL\Platforms\SQLServer2012Platform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use InvalidArgumentException;
 
@@ -98,7 +98,7 @@ class DatabaseSwitchService
             case 'pdo_mysql':
                 return new MySqlPlatform();
             case 'pdo_sqlsrv':
-                return new SQLServerPlatform();
+                return new SQLServer2012Platform();
             default:
                 throw new InvalidArgumentException('Driver not supported: ' . $db_driver);
         }
