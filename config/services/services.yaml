@@ -19,3 +19,5 @@ services:
     ControleOnline\Command\:
         resource: '../../src/Command'
         tags: ['console.command']
+    ControleOnline\Filter\:
+        resource: '../../src/Filter'            
