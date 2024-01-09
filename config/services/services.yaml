@@ -1,22 +1,21 @@
 services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
     ControleOnline\:
-        resource: "../../src/*"
-        exclude: "../src/{DependencyInjection,Entity,Resource,Migrations,Library,Tests,Kernel.php}"
+        resource: '../../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Resource,Migrations,Library,Tests,Kernel.php}'
     ControleOnline\Repository\:
-        resource: "../../src/Repository"
-        tags: ["doctrine.repository_service"]
-        arguments:
-            $registry: '@doctrine'        
-    ControleOnline\Service\DatabaseSwitchService:
-        arguments:
-            $connection: '@doctrine.dbal.default_connection'
+        resource: '../../src/Repository'
+        tags: ['doctrine.repository_service']
+    ControleOnline\Controller\:
+        resource: '../../src/Controller'
+        tags: ['controller.service_arguments']
+    # Os serviços abaixo agora dependem do autowiring para a injeção de dependências
+    ControleOnline\Service\DatabaseSwitchService: ~
     ControleOnline\EventListener\DatabaseSwitchListener:
-        arguments:
-            $DatabaseSwitchService: '@ControleOnline\Service\DatabaseSwitchService'
         tags:
             - { name: 'kernel.event_listener', event: 'kernel.request', method: 'onKernelRequest', priority: 512 }
-    ControleOnline\Command\MigrateCommand:
-        arguments:
-            $DatabaseSwitchService: '@ControleOnline\Service\DatabaseSwitchService'
-        tags:
-            - { name: 'console.command' }
+    ControleOnline\Command\:
+        resource: '../../src/Command'
+        tags: ['console.command']
