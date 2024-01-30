@@ -21,12 +21,15 @@ class DatabaseSwitchListener
     public function onKernelRequest(RequestEvent $event)
     {
         try {
+            $this->domain = $this->databaseSwitchService->getDomain($event->getRequest());
             if (!self::$tenency_params)
-                self::$tenency_params = $this->databaseSwitchService->switchDatabaseByDomain(
-                    $this->databaseSwitchService->getDomain($event->getRequest())
-                );
+                self::$tenency_params = $this->databaseSwitchService->switchDatabaseByDomain($this->domain);
         } catch (Exception $e) {
-            throw new Exception(sprintf('Domain (%s) not found', $this->domain), 1);
+            throw new Exception(
+                sprintf('Don`t connect on this domain (%s). ', $this->domain)
+                    . $e->getMessage(),
+                1
+            );
         }
     }
 }
