@@ -10,9 +10,20 @@ use InvalidArgumentException;
 
 class DatabaseSwitchService
 {
+    /**
+     * @var Connection
+     */
     private $connection;
+    /**
+     * @var array
+     */
     private static $originalDbParams;
 
+
+    /**
+     * DatabaseSwitchService constructor.
+     * @param Connection $connection
+     */
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
@@ -20,16 +31,27 @@ class DatabaseSwitchService
             self::$originalDbParams = $connection->getParams();
     }
 
+    /* @param string $domain
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
+     */
     public function switchDatabaseByDomain($domain)
     {
         $this->switchDatabase($this->getDbData($domain));
     }
-    
+
+    /**
+     * @param string $domain
+     * @return bool
+     */
     public function switchBackToOriginalDatabase()
     {
         $this->switchDatabase(self::$originalDbParams);
     }
 
+    /**
+     * @param array $dbData
+     */
     private function switchDatabase($dbData)
     {
         if ($this->connection->isConnected())
@@ -41,16 +63,33 @@ class DatabaseSwitchService
             $this->connection->getConfiguration(),
             $this->connection->getEventManager()
         );
-        
+
         $this->connection->connect();
     }
 
+    /**
+     * @param string $domain
+     * @return array
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
+     * @throws \Doctrine\DBAL\Driver\Exception
+     */
     private function getDbData($domain)
     {
         $this->switchBackToOriginalDatabase();
         $params = $this->connection->getParams();
-        $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, db_password FROM `databases` WHERE app_host = :app_host';
-        $statement = $this->connection->executeQuery($sql, ['app_host' => $domain]);
+        $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, 
+            AES_DECRYPT(db_password, :tenancy_secret) AS db_password
+            FROM `databases` WHERE app_host = :app_host';
+
+        $statement = $this->connection->executeQuery(
+            $sql,
+            [
+                'app_host' => $domain,
+                'tenancy_secret' => $_ENV['TENENCY_SECRET']
+            ],
+            ['app_host' => \PDO::PARAM_STR, 'tenancy_secret' => \PDO::PARAM_STR]
+        );
 
         $result = $statement->fetchAssociative();
         $params['platform'] = $this->getPlatform($result['db_driver']);
@@ -64,6 +103,11 @@ class DatabaseSwitchService
         return  $params;
     }
 
+    /**
+     * @return array
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
+     */
     public function getAllDomains()
     {
         $this->switchBackToOriginalDatabase();
@@ -74,6 +118,10 @@ class DatabaseSwitchService
         return $domains;
     }
 
+    /**
+     * @param array $dbData
+     * @return mixed
+     */
     private function getDriverClass($dbData)
     {
         $driverClass = null;
@@ -92,6 +140,10 @@ class DatabaseSwitchService
         return new $driverClass();
     }
 
+    /**
+     * @param string $db_driver
+     * @return MySqlPlatform|SQLServer2012Platform
+     */
     private function getPlatform($db_driver)
     {
         switch ($db_driver) {
@@ -104,6 +156,10 @@ class DatabaseSwitchService
         }
     }
 
+    /**
+     * @param Request $request
+     * @return string
+     */
     public function getDomain(Request $request)
     {
 
@@ -116,7 +172,7 @@ class DatabaseSwitchService
                     'app-domain',
                     $request->headers->get(
                         'referer',
-                       $_SERVER['HTTP_HOST']
+                        $_SERVER['HTTP_HOST']
                     )
                 )
             )

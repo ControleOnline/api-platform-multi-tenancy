@@ -3,6 +3,7 @@
 namespace ControleOnline\Command;
 
 use ControleOnline\Service\DatabaseSwitchService;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
@@ -10,9 +11,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class MigrateCommand extends Command
+#[AsCommand(
+    name: 'tenant:migrations:migrate',
+    description: 'Proxy to migrate a new tenant database.',
+)]
+final class MigrateCommand extends Command
 {
-    protected static $defaultName = 'tenant:migrations:migrate';
 
     private $databaseSwitchService;
 
@@ -27,7 +31,7 @@ class MigrateCommand extends Command
         $this
             ->setName('tenant:migrations:migrate')
             ->setAliases(['t:m:m'])
-            ->setDescription('Proxy to launch doctrine:migrations:migrate for specific database.')
+            ->setDescription('Proxy to launch doctrine:migrations:migrate for specific database .')
             ->addArgument('domain', InputArgument::OPTIONAL, 'Database Domain Identifier')
             ->addArgument('version', InputArgument::OPTIONAL, 'The version number (YYYYMMDDHHMMSS) or alias (first, prev, next, latest) to migrate to.', 'latest')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Execute the migration as a dry run.')
@@ -38,14 +42,15 @@ class MigrateCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $domain = $input->getArgument('domain');
-        if ($domain) {
+        if ($domain)
             return $this->migrateByDomain($domain, $input, $output);
-        }
 
         $domains = $this->databaseSwitchService->getAllDomains();
 
         foreach ($domains as $domain) {
-            // @todo change to migrateByDomain method
+            /**
+             * @todo change to migrateByDomain method
+             */
             $this->executemigration($domain, $input, $output);
         }
 
@@ -56,7 +61,7 @@ class MigrateCommand extends Command
     {
         $execOutput = [];
         $returnCode = null;
-        $command = "php bin/console tenant:migrations:migrate $domain " . $input->getArgument('version');
+        $command = "php bin/console tenant:migrations:migrate $domain  " . $input->getArgument('version');
 
         $output->writeln($command);
 
@@ -79,6 +84,6 @@ class MigrateCommand extends Command
         $newInput->setInteractive(false);
 
         $command = $this->getApplication()->find('doctrine:migrations:migrate');
-        return $command->run($newInput, $output);
+        return  $command->run($newInput, $output);
     }
 }
