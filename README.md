@@ -12,7 +12,7 @@ imports:
     - { resource: "../modules/controleonline/multi-tenancy/config/config.yaml" }    
 ```
 
-Add a header on CORS:
+Add 'app-domain' a header on CORS:
 config\packages\nelmio_cors.yaml
 
 ```yaml
