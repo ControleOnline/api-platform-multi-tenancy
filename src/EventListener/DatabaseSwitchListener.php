@@ -26,7 +26,7 @@ class DatabaseSwitchListener
                     $this->databaseSwitchService->getDomain($event->getRequest())
                 );
         } catch (Exception $e) {
-            throw new Exception(sprintf('Domain (%s) not found', $this->domain), 1);
+            throw new Exception(sprintf('%s', $e), 1);
         }
     }
 }
