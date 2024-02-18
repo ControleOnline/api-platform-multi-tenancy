@@ -172,7 +172,7 @@ class DatabaseSwitchService
                     'app-domain',
                     $request->headers->get(
                         'referer',
-                        $_SERVER['HTTP_HOST']
+                        $request->server->get('HTTP_HOST')
                     )
                 )
             )
