@@ -9,7 +9,7 @@ config\services.yaml
 
 ```yaml
 imports:
-    - { resource: "../modules/controleonline/multi-tenancy/config/config.yaml" }    
+    - { resource: "../vendor/controleonline/multi-tenancy/config/config.yaml" }    
 ```
 
 Add 'app-domain' a header on CORS:
