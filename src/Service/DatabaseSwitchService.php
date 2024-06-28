@@ -3,7 +3,6 @@
 namespace ControleOnline\Service;
 
 use Doctrine\DBAL\Connection;
-use Symfony\Component\HttpFoundation\Request;
 use Doctrine\DBAL\Platforms\SQLServer2012Platform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use InvalidArgumentException;
@@ -156,30 +155,5 @@ class DatabaseSwitchService
         }
     }
 
-    /**
-     * @param Request $request
-     * @return string
-     */
-    public function getDomain(Request $request)
-    {
-
-        $domain = preg_replace("/[^a-zA-Z0-9.:_-]/", "", str_replace(
-            ['https://', 'http://'],
-            '',
-            $request->get(
-                'app-domain',
-                $request->headers->get(
-                    'app-domain',
-                    $request->headers->get(
-                        'referer',
-                        $request->server->get('HTTP_HOST')
-                    )
-                )
-            )
-        ));
-
-        if (!$domain)
-            throw new InvalidArgumentException('Please define header or get param "app-domain"', 301);
-        return $domain;
-    }
+  
 }

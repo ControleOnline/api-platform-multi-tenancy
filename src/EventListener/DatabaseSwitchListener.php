@@ -3,6 +3,7 @@
 namespace ControleOnline\EventListener;
 
 use ControleOnline\Service\DatabaseSwitchService;
+use ControleOnline\Service\DomainService;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Exception;
 
@@ -10,12 +11,12 @@ class DatabaseSwitchListener
 {
     private $domain;
     private static $tenency_params;
-    private $databaseSwitchService;
 
 
-    public function __construct(DatabaseSwitchService $DatabaseSwitchService)
-    {
-        $this->databaseSwitchService = $DatabaseSwitchService;
+    public function __construct(
+        private DatabaseSwitchService $databaseSwitchService,
+        private DomainService $domainService
+    ) {
     }
 
     public function onKernelRequest(RequestEvent $event)
@@ -23,7 +24,7 @@ class DatabaseSwitchListener
         try {
             if (!self::$tenency_params)
                 self::$tenency_params = $this->databaseSwitchService->switchDatabaseByDomain(
-                    $this->databaseSwitchService->getDomain($event->getRequest())
+                    $this->domainService->getDomain()
                 );
         } catch (Exception $e) {
             throw new Exception(sprintf('%s', $e), 1);
