@@ -17,7 +17,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 final class MigrateCommand extends Command
 {
-
     private $databaseSwitchService;
 
     public function __construct(DatabaseSwitchService $DatabaseSwitchService)
@@ -39,18 +38,16 @@ final class MigrateCommand extends Command
             ->addOption('allow-no-migration', null, InputOption::VALUE_NONE, 'Do not throw an exception when no changes are detected.');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $domain = $input->getArgument('domain');
-        if ($domain)
+        if ($domain) {
             return $this->migrateByDomain($domain, $input, $output);
+        }
 
         $domains = $this->databaseSwitchService->getAllDomains();
 
         foreach ($domains as $domain) {
-            /**
-             * @todo change to migrateByDomain method
-             */
             $this->executemigration($domain, $input, $output);
         }
 
@@ -84,6 +81,6 @@ final class MigrateCommand extends Command
         $newInput->setInteractive(false);
 
         $command = $this->getApplication()->find('doctrine:migrations:migrate');
-        return  $command->run($newInput, $output);
+        return $command->run($newInput, $output);
     }
 }
