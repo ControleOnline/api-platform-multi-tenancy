@@ -13,16 +13,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'tenant:migrations:migrate',
-    description: 'Proxy to migrate a new tenant database.',
+    description: 'Proxy para migrar um novo banco de dados de tenant.',
 )]
 final class MigrateCommand extends Command
 {
+    private DatabaseSwitchService $databaseSwitchService;
 
-    private $databaseSwitchService;
-
-    public function __construct(DatabaseSwitchService $DatabaseSwitchService)
+    public function __construct(DatabaseSwitchService $databaseSwitchService)
     {
-        $this->databaseSwitchService = $DatabaseSwitchService;
+        $this->databaseSwitchService = $databaseSwitchService;
         parent::__construct();
     }
 
@@ -31,59 +30,50 @@ final class MigrateCommand extends Command
         $this
             ->setName('tenant:migrations:migrate')
             ->setAliases(['t:m:m'])
-            ->setDescription('Proxy to launch doctrine:migrations:migrate for specific database .')
-            ->addArgument('domain', InputArgument::OPTIONAL, 'Database Domain Identifier')
-            ->addArgument('version', InputArgument::OPTIONAL, 'The version number (YYYYMMDDHHMMSS) or alias (first, prev, next, latest) to migrate to.', 'latest')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Execute the migration as a dry run.')
-            ->addOption('query-time', null, InputOption::VALUE_NONE, 'Time all the queries individually.')
-            ->addOption('allow-no-migration', null, InputOption::VALUE_NONE, 'Do not throw an exception when no changes are detected.');
+            ->setDescription('Proxy para executar doctrine:migrations:migrate para um banco de dados específico.')
+            ->addArgument('domain', InputArgument::OPTIONAL, 'Identificador do domínio do banco de dados')
+            ->addArgument('version', InputArgument::OPTIONAL, 'O número da versão (AAAAMMDDHHMMSS) ou alias (first, prev, next, latest) para migrar.', 'latest')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Executar a migração como uma simulação.')
+            ->addOption('query-time', null, InputOption::VALUE_NONE, 'Medir o tempo de todas as consultas individualmente.')
+            ->addOption('allow-no-migration', null, InputOption::VALUE_NONE, 'Não lançar uma exceção quando nenhuma alteração for detectada.');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $domain = $input->getArgument('domain');
-        if ($domain)
+
+        if ($domain) {
             return $this->migrateByDomain($domain, $input, $output);
+        }
 
         $domains = $this->databaseSwitchService->getAllDomains();
+        $exitCode = Command::SUCCESS;
 
         foreach ($domains as $domain) {
-            /**
-             * @todo change to migrateByDomain method
-             */
-            $this->executemigration($domain, $input, $output);
+            $result = $this->migrateByDomain($domain, $input, $output);
+            if ($result !== Command::SUCCESS) {
+                $exitCode = Command::FAILURE;
+            }
         }
 
-        return Command::SUCCESS;
+        return $exitCode;
     }
 
-    protected function executemigration($domain, InputInterface $input, OutputInterface $output)
-    {
-        $execOutput = [];
-        $returnCode = null;
-        $command = "php bin/console tenant:migrations:migrate $domain  " . $input->getArgument('version');
-
-        $output->writeln($command);
-
-        exec($command, $execOutput, $returnCode);
-        foreach ($execOutput as $line) {
-            $output->writeln($line);
-        }
-
-        return $returnCode;
-    }
-
-    protected function migrateByDomain($domain, InputInterface $input, OutputInterface $output)
+    protected function migrateByDomain(string $domain, InputInterface $input, OutputInterface $output): int
     {
         $this->databaseSwitchService->switchDatabaseByDomain($domain);
 
         $newInput = new ArrayInput([
             'version' => $input->getArgument('version'),
             '--dry-run' => $input->getOption('dry-run'),
+            '--query-time' => $input->getOption('query-time'),
+            '--allow-no-migration' => $input->getOption('allow-no-migration'),
         ]);
         $newInput->setInteractive(false);
 
+        $output->writeln(sprintf('Executando migrações para o domínio: %s', $domain));
+
         $command = $this->getApplication()->find('doctrine:migrations:migrate');
-        return  $command->run($newInput, $output);
+        return $command->run($newInput, $output);
     }
 }
