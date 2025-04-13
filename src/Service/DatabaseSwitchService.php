@@ -5,6 +5,7 @@ namespace ControleOnline\Service;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
+use Doctrine\DBAL\Types\Type;
 use InvalidArgumentException;
 
 class DatabaseSwitchService
@@ -87,7 +88,7 @@ class DatabaseSwitchService
                 'app_host' => $domain,
                 'tenancy_secret' => $_ENV['TENANCY_SECRET']
             ],
-            ['app_host' => \PDO::PARAM_STR, 'tenancy_secret' => \PDO::PARAM_STR]
+            ['app_host' => Type::getType('string'), 'tenancy_secret' => Type::getType('string')]
         );
 
         $result = $statement->fetchAssociative();
