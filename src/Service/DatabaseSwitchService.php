@@ -59,7 +59,7 @@ class DatabaseSwitchService
                 $sql,
                 [
                     'app_host' => $domain,
-                    'tenancy_secret' => $_ENV['TENENCY_SECRET']
+                    'tenancy_secret' => $_ENV['TENANCY_SECRET']
                 ],
                 [
                     'app_host' => ParameterType::STRING,

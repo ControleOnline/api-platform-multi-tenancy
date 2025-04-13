@@ -10,7 +10,7 @@ use Exception;
 class DatabaseSwitchListener
 {
     private $domain;
-    private static $tenency_params;
+    private static $tenancy_params;
 
 
     public function __construct(
@@ -22,8 +22,8 @@ class DatabaseSwitchListener
     public function onKernelRequest(RequestEvent $event)
     {
         try {
-            if (!self::$tenency_params)
-                self::$tenency_params = $this->databaseSwitchService->switchDatabaseByDomain(
+            if (!self::$tenancy_params)
+                self::$tenancy_params = $this->databaseSwitchService->switchDatabaseByDomain(
                     $this->domainService->getDomain()
                 );
         } catch (Exception $e) {
