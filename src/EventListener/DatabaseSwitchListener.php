@@ -16,12 +16,14 @@ class DatabaseSwitchListener
     public function __construct(
         private DatabaseSwitchService $databaseSwitchService,
         private DomainService $domainService
-    ) {
-    }
+    ) {}
 
     public function onKernelRequest(RequestEvent $event)
     {
         try {
+            if (!$_ENV['MULTI_TENANCY'])
+                return;
+
             if (!self::$tenancy_params)
                 self::$tenancy_params = $this->databaseSwitchService->switchDatabaseByDomain(
                     $this->domainService->getDomain()
