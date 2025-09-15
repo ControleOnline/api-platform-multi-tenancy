@@ -21,10 +21,8 @@ class DatabaseSwitchListener
     public function onKernelRequest(RequestEvent $event)
     {
         try {
-            if (!$_ENV['MULTI_TENANCY'])
-                return;
-
-            if (!self::$tenancy_params)
+            
+            if (!self::$tenancy_params && $_ENV['MULTI_TENANCY'])
                 self::$tenancy_params = $this->databaseSwitchService->switchDatabaseByDomain(
                     $this->domainService->getDomain()
                 );
