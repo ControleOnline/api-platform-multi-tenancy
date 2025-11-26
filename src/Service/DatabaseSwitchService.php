@@ -37,7 +37,18 @@ class DatabaseSwitchService
      */
     public function switchDatabaseByDomain($domain)
     {
-        $this->switchDatabase($this->getDbData($domain));
+
+        // AleMac // 25/11/25
+        // $this->switchDatabase($this->getDbData($domain));
+        // Só troca o banco se existir tenant para aquele domínio.
+        $dbData = $this->getDbData($domain);
+
+        if (!$dbData) {
+            // Nenhum tenant → NÃO trocar banco
+            return;
+        }
+        $this->switchDatabase($dbData);
+
     }
 
     /**
@@ -92,6 +103,15 @@ class DatabaseSwitchService
         );
 
         $result = $statement->fetchAssociative();
+
+        // AleMac // 25/11/25
+        // Se a consulta não encontrar domínio, 
+        // retorna false em vez de tentar acessar
+        if (!$result) {
+            return false; // nenhum tenant encontrado
+        }
+        //
+
         $params['platform'] = $this->getPlatform($result['db_driver']);
         $params['host'] = $result['db_host'];
         $params['port'] = $result['db_port'];
