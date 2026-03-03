@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
+use Throwable;
 
 #[AsCommand(
     name: 'tenant:migrations:migrate',
@@ -41,6 +42,12 @@ final class MigrateCommand extends DefaultCommand
 
     protected function runCommand(): int
     {
+        // ALEMAC // 2026/03/03 15:00:00
+        $domain = $this->input->getOption('domain') ?: 'all-domains';
+        $version = $this->input->getArgument('version') ?: 'latest';
+
+        $this->addLog(sprintf('[tenant:migrations:migrate] Iniciando migração | domain=%s | version=%s', $domain, $version));
+
         $newInput = new ArrayInput([
             'version' => $this->input->getArgument('version'),
             '--dry-run' => $this->input->getOption('dry-run'),
@@ -49,6 +56,29 @@ final class MigrateCommand extends DefaultCommand
         ]);
         $newInput->setInteractive(false);
         $command = $this->getApplication()->find('doctrine:migrations:migrate');
-        return $command->run($newInput, $this->output);
+
+        try {
+            $statusCode = $command->run($newInput, $this->output);
+
+            if ($statusCode === Command::SUCCESS) {
+                // ALEMAC // 2026/03/03 15:00:00
+                $this->addLog(sprintf('[tenant:migrations:migrate] SUCESSO | domain=%s | version=%s', $domain, $version));
+            } else {
+                // ALEMAC // 2026/03/03 15:00:00
+                $this->addLog(sprintf('[tenant:migrations:migrate] ERRO | domain=%s | version=%s | motivo=status_code_%d', $domain, $version, $statusCode));
+            }
+
+            return $statusCode;
+        } catch (Throwable $exception) {
+            // ALEMAC // 2026/03/03 15:00:00
+            $this->addLog(sprintf(
+                '[tenant:migrations:migrate] ERRO | domain=%s | version=%s | motivo=%s',
+                $domain,
+                $version,
+                $exception->getMessage()
+            ));
+
+            return Command::FAILURE;
+        }
     }
 }
