@@ -17,7 +17,7 @@ use Throwable;
     name: 'tenant:migrations:migrate',
     description: 'Proxy para migrar um novo banco de dados de tenant.',
 )]
-final class MigrateCommand extends DefaultCommand
+final class TenantMigrateCommand extends DefaultCommand
 {
 
     public function __construct(
