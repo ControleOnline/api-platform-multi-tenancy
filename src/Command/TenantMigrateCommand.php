@@ -3,6 +3,8 @@
 namespace ControleOnline\Command;
 
 use ControleOnline\Service\DatabaseSwitchService;
+use ControleOnline\Service\LoggerService;
+use ControleOnline\Service\SkyNetService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -22,10 +24,14 @@ final class TenantMigrateCommand extends DefaultCommand
 
     public function __construct(
         LockFactory $lockFactory,
-        DatabaseSwitchService $databaseSwitchService
+        DatabaseSwitchService $databaseSwitchService,
+        LoggerService $loggerService,
+        SkyNetService $skyNetService
     ) {
         $this->lockFactory = $lockFactory;
         $this->databaseSwitchService = $databaseSwitchService;
+        $this->loggerService = $loggerService;
+        $this->skyNetService = $skyNetService;
         parent::__construct('tenant:migrations:migrate');
     }
 
