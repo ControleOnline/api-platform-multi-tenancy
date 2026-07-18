@@ -154,6 +154,30 @@ class DatabaseSwitchService
     }
 
     /**
+     * @param string $domain
+     * @return array|false
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function getTenantConnectionInfo($domain)
+    {
+        $dbData = $this->getDbData($domain);
+
+        if (!$dbData) {
+            return false;
+        }
+
+        return [
+            'app_host' => $domain,
+            'db_host' => $dbData['host'] ?? null,
+            'db_name' => $dbData['dbname'] ?? null,
+            'db_port' => $dbData['port'] ?? null,
+            'db_driver' => $dbData['driver'] ?? null,
+            'db_instance' => $dbData['instancename'] ?? null,
+        ];
+    }
+
+    /**
      * @param array $dbData
      * @return mixed
      */
