@@ -161,19 +161,35 @@ class DatabaseSwitchService
      */
     public function getTenantConnectionInfo($domain)
     {
-        $dbData = $this->getDbData($domain);
+        $currentParams = $this->connection->getParams();
+        $this->switchBackToOriginalDatabase();
 
-        if (!$dbData) {
+        try {
+            $statement = $this->connection->executeQuery(
+                'SELECT app_host, db_host, db_name, db_port, db_driver, db_instance
+                 FROM `databases`
+                 WHERE app_host = :app_host
+                 LIMIT 1',
+                ['app_host' => $domain],
+                ['app_host' => Type::getType('string')]
+            );
+
+            $result = $statement->fetchAssociative();
+        } finally {
+            $this->switchDatabase($currentParams);
+        }
+
+        if (!$result) {
             return false;
         }
 
         return [
-            'app_host' => $domain,
-            'db_host' => $dbData['host'] ?? null,
-            'db_name' => $dbData['dbname'] ?? null,
-            'db_port' => $dbData['port'] ?? null,
-            'db_driver' => $dbData['driver'] ?? null,
-            'db_instance' => $dbData['instancename'] ?? null,
+            'app_host' => $result['app_host'] ?? $domain,
+            'db_host' => $result['db_host'] ?? null,
+            'db_name' => $result['db_name'] ?? null,
+            'db_port' => $result['db_port'] ?? null,
+            'db_driver' => $result['db_driver'] ?? null,
+            'db_instance' => $result['db_instance'] ?? null,
         ];
     }
 
