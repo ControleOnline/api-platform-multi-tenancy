@@ -39,7 +39,7 @@ class DatabaseSwitchService
      * DatabaseSwitchService constructor.
      * @param Connection $connection
      */
-    public function __construct(Connection $connection)
+    public function __construct(Connection $connection, private ?TimezoneService $timezoneService = null)
     {
         $this->connection = $connection;
         if (!self::$originalDbParams)
@@ -90,6 +90,7 @@ class DatabaseSwitchService
             //$this->connection->getEventManager()
         );
 
+        $this->timezoneService?->applyCurrentTimezoneToConnection();
         //$this->connection->connect();
     }
 
