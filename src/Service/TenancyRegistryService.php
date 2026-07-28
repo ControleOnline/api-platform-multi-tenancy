@@ -34,6 +34,7 @@ class TenancyRegistryService
 
         $status = trim((string) ($filters['instalation_status'] ?? ''));
         if ($status !== '') {
+            $status = $this->normalizeStatus($status);
             $where[] = '`instalation_status` = :status';
             $params['status'] = $status;
             $types['status'] = ParameterType::STRING;
@@ -109,7 +110,7 @@ class TenancyRegistryService
                 'db_user' => ParameterType::STRING,
                 'db_password' => ParameterType::STRING,
                 'db_driver' => ParameterType::STRING,
-                'db_instance' => ParameterType::STRING,
+                'db_instance' => $data['db_instance'] === null ? ParameterType::NULL : ParameterType::STRING,
                 'instalation_status' => ParameterType::STRING,
                 'tenancy_secret' => ParameterType::STRING,
             ]
@@ -146,7 +147,7 @@ class TenancyRegistryService
             'db_port' => ParameterType::INTEGER,
             'db_user' => ParameterType::STRING,
             'db_driver' => ParameterType::STRING,
-            'db_instance' => ParameterType::STRING,
+            'db_instance' => $data['db_instance'] === null ? ParameterType::NULL : ParameterType::STRING,
             'instalation_status' => ParameterType::STRING,
             'id' => ParameterType::INTEGER,
         ];
@@ -217,7 +218,7 @@ class TenancyRegistryService
             'db_port' => (int) ($payload['db_port'] ?? $payload['dbPort'] ?? $current['dbPort'] ?? 3306),
             'db_user' => $this->requireText($payload['db_user'] ?? $payload['dbUser'] ?? $current['dbUser'] ?? '', 'db_user is required.'),
             'db_driver' => $this->normalizeDriver($payload['db_driver'] ?? $payload['dbDriver'] ?? $current['dbDriver'] ?? 'pdo_mysql'),
-            'db_instance' => trim((string) ($payload['db_instance'] ?? $payload['dbInstance'] ?? $current['dbInstance'] ?? '')),
+            'db_instance' => $this->normalizeNullableText($payload['db_instance'] ?? $payload['dbInstance'] ?? $current['dbInstance'] ?? null),
             'instalation_status' => $this->normalizeStatus($payload['instalation_status'] ?? $payload['instalationStatus'] ?? $current['instalationStatus'] ?? 'pending'),
         ];
 
@@ -272,6 +273,13 @@ class TenancyRegistryService
         return $driver;
     }
 
+    private function normalizeNullableText(mixed $value): ?string
+    {
+        $text = trim((string) $value);
+
+        return $text === '' ? null : $text;
+    }
+
     private function normalizeStatus(mixed $value): string
     {
         $status = strtolower(trim((string) $value)) ?: 'pending';
@@ -284,6 +292,11 @@ class TenancyRegistryService
 
     private function getTenancySecret(): string
     {
-        return (string) ($_ENV['TENANCY_SECRET'] ?? $_SERVER['TENANCY_SECRET'] ?? getenv('TENANCY_SECRET') ?: '');
+        $secret = (string) ($_ENV['TENANCY_SECRET'] ?? $_SERVER['TENANCY_SECRET'] ?? getenv('TENANCY_SECRET') ?: '');
+        if ($secret === '') {
+            throw new BadRequestHttpException('TENANCY_SECRET is not configured.');
+        }
+
+        return $secret;
     }
 }

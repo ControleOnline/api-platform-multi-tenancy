@@ -124,7 +124,7 @@ final class TenantInstallPendingCommand extends Command
     private function findPendingTenants(int $limit, string $domain = ''): array
     {
         $where = [
-            '`instalation_status` <> "installed"',
+            '`instalation_status` = "pending"',
         ];
         $params = [];
         $types = [];
@@ -156,7 +156,7 @@ final class TenantInstallPendingCommand extends Command
             'UPDATE `databases`
              SET `instalation_status` = "installing"
              WHERE `id` = :id
-               AND `instalation_status` <> "installed"',
+               AND `instalation_status` = "pending"',
             [
                 'id' => $id,
             ],
