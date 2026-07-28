@@ -1,0 +1,3 @@
+controleonline_multi_tenancy:
+    resource: ../../src/Controller/
+    type: attribute
