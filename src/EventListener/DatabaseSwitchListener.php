@@ -15,9 +15,24 @@ class DatabaseSwitchListener
 
     public function onKernelRequest(RequestEvent $event)
     {
-        if ($_ENV['MULTI_TENANCY'])
-            $this->databaseSwitchService->switchDatabaseByDomain(
-                $this->domainService->getDomain()
-            );
+        if (!$_ENV['MULTI_TENANCY']) {
+            return;
+        }
+
+        if ($this->shouldLetControllerSwitchDatabase($event)) {
+            return;
+        }
+
+        $this->databaseSwitchService->switchDatabaseByDomain(
+            $this->domainService->getDomain()
+        );
+    }
+
+    private function shouldLetControllerSwitchDatabase(RequestEvent $event): bool
+    {
+        return preg_match(
+            '#^/[^/]+/mercadolivre/oauth/return$#',
+            $event->getRequest()->getPathInfo()
+        ) === 1;
     }
 }
