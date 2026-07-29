@@ -187,18 +187,18 @@ final class Version20260729172000 extends AbstractMigration
 
     private function linkDatabasesFromLegacyColumns(): void
     {
-        $this->addSql('UPDATE `databases`
-            INNER JOIN `servers`
-                ON servers.`connection_hash` = SHA2(CONCAT_WS("|",
-                    databases.`db_driver`,
-                    databases.`db_host`,
-                    databases.`db_name`,
-                    databases.`db_user`,
-                    databases.`db_port`,
-                    COALESCE(databases.`db_instance`, "")
+        $this->addSql('UPDATE `databases` d
+            INNER JOIN `servers` s
+                ON s.`connection_hash` = SHA2(CONCAT_WS("|",
+                    d.`db_driver`,
+                    d.`db_host`,
+                    d.`db_name`,
+                    d.`db_user`,
+                    d.`db_port`,
+                    COALESCE(d.`db_instance`, "")
                 ), 256)
-            SET databases.`server_id` = servers.`id`
-            WHERE databases.`server_id` IS NULL');
+            SET d.`server_id` = s.`id`
+            WHERE d.`server_id` IS NULL');
     }
 
     private function addDatabaseServerForeignKey(): void
