@@ -5,7 +5,6 @@ namespace ControleOnline\EventListener;
 use ControleOnline\Service\DatabaseSwitchService;
 use ControleOnline\Service\DomainService;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Exception;
 
 class DatabaseSwitchListener
 {
@@ -16,13 +15,9 @@ class DatabaseSwitchListener
 
     public function onKernelRequest(RequestEvent $event)
     {
-        try {
-            if ($_ENV['MULTI_TENANCY'])
-                $this->databaseSwitchService->switchDatabaseByDomain(
-                    $this->domainService->getDomain()
-                );
-        } catch (Exception $e) {
-            throw new Exception(sprintf('%s', $e), 1);
-        }
+        if ($_ENV['MULTI_TENANCY'])
+            $this->databaseSwitchService->switchDatabaseByDomain(
+                $this->domainService->getDomain()
+            );
     }
 }

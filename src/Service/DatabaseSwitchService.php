@@ -22,6 +22,7 @@ use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Types\Type;
 use InvalidArgumentException;
+use RuntimeException;
 
 class DatabaseSwitchService
 {
@@ -53,15 +54,12 @@ class DatabaseSwitchService
     public function switchDatabaseByDomain($domain)
     {
 
-        // AleMac // 25/11/25
-        // $this->switchDatabase($this->getDbData($domain));
-        // Só troca o banco se existir tenant para aquele domínio.
         $dbData = $this->getDbData($domain);
 
         if (!$dbData) {
-            // Nenhum tenant → NÃO trocar banco
-            return;
+            throw new RuntimeException(sprintf('Tenant "%s" not found.', $domain));
         }
+
         $this->switchDatabase($dbData);
 
     }
@@ -119,13 +117,9 @@ class DatabaseSwitchService
 
         $result = $statement->fetchAssociative();
 
-        // AleMac // 25/11/25
-        // Se a consulta não encontrar domínio, 
-        // retorna false em vez de tentar acessar
         if (!$result) {
-            return false; // nenhum tenant encontrado
+            return false;
         }
-        //
 
         $params['platform'] = $this->getPlatform($result['db_driver']);
         $params['host'] = $result['db_host'];
