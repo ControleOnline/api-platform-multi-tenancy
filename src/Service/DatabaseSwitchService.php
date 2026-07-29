@@ -102,9 +102,24 @@ class DatabaseSwitchService
     {
         $this->switchBackToOriginalDatabase();
         $params = $this->connection->getParams();
-        $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, 
-            AES_DECRYPT(db_password, :tenancy_secret) AS db_password
-            FROM `databases` WHERE app_host = :app_host';
+        if ($this->hasNormalizedConnectionSchema()) {
+            $sql = 'SELECT
+                    database_connections.db_host,
+                    database_connections.db_name,
+                    database_connections.db_port,
+                    database_connections.db_user,
+                    database_connections.db_driver,
+                    database_connections.db_instance,
+                    AES_DECRYPT(database_connections.db_password, :tenancy_secret) AS db_password
+                FROM `databases`
+                INNER JOIN `database_connections`
+                    ON database_connections.id = databases.database_connection_id
+                WHERE databases.app_host = :app_host';
+        } else {
+            $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance,
+                AES_DECRYPT(db_password, :tenancy_secret) AS db_password
+                FROM `databases` WHERE app_host = :app_host';
+        }
 
         $statement = $this->connection->executeQuery(
             $sql,
@@ -160,10 +175,23 @@ class DatabaseSwitchService
 
         try {
             $statement = $this->connection->executeQuery(
-                'SELECT app_host, db_host, db_name, db_port, db_driver, db_instance
-                 FROM `databases`
-                 WHERE app_host = :app_host
-                 LIMIT 1',
+                $this->hasNormalizedConnectionSchema()
+                    ? 'SELECT
+                        databases.app_host,
+                        database_connections.db_host,
+                        database_connections.db_name,
+                        database_connections.db_port,
+                        database_connections.db_driver,
+                        database_connections.db_instance
+                     FROM `databases`
+                     INNER JOIN `database_connections`
+                        ON database_connections.id = databases.database_connection_id
+                     WHERE databases.app_host = :app_host
+                     LIMIT 1'
+                    : 'SELECT app_host, db_host, db_name, db_port, db_driver, db_instance
+                     FROM `databases`
+                     WHERE app_host = :app_host
+                     LIMIT 1',
                 ['app_host' => $domain],
                 ['app_host' => Type::getType('string')]
             );
@@ -224,5 +252,40 @@ class DatabaseSwitchService
         }
     }
 
-  
+    private function hasNormalizedConnectionSchema(): bool
+    {
+        return $this->tableExists('database_connections')
+            && $this->columnExists('databases', 'database_connection_id');
+    }
+
+    private function tableExists(string $tableName): bool
+    {
+        try {
+            return (int) $this->connection->fetchOne(
+                'SELECT COUNT(*)
+                 FROM information_schema.TABLES
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = ?',
+                [$tableName]
+            ) > 0;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function columnExists(string $tableName, string $columnName): bool
+    {
+        try {
+            return (int) $this->connection->fetchOne(
+                'SELECT COUNT(*)
+                 FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = ?
+                   AND COLUMN_NAME = ?',
+                [$tableName, $columnName]
+            ) > 0;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
 }

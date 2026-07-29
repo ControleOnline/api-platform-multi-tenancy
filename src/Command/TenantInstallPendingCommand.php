@@ -96,7 +96,7 @@ final class TenantInstallPendingCommand extends Command
         if (!$this->columnExists('instalation_status')) {
             $this->connection->executeStatement(
                 'ALTER TABLE `databases`
-                 ADD `instalation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending" AFTER `db_password`'
+                 ADD `instalation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending"'
             );
             $this->connection->executeStatement(
                 'UPDATE `databases`
