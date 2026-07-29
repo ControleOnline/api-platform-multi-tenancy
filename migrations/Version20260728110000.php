@@ -11,7 +11,7 @@ final class Version20260728110000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add tenant installation status to the master databases table.';
+        return 'Add tenant installation status to the master tenancy table.';
     }
 
     public function up(Schema $schema): void
@@ -20,12 +20,12 @@ final class Version20260728110000 extends AbstractMigration
             return;
         }
 
-        if (!$this->columnExists('databases', 'instalation_status')) {
-            $this->addSql('ALTER TABLE `databases` ADD `instalation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending" AFTER `db_password`');
+        if (!$this->columnExists('databases', 'installation_status')) {
+            $this->addSql('ALTER TABLE `databases` ADD `installation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending" AFTER `db_password`');
             $this->addSql(
                 'UPDATE `databases`
-                 SET `instalation_status` = "installed"
-                 WHERE `instalation_status` = "pending"'
+                 SET `installation_status` = "installed"
+                 WHERE `installation_status` = "pending"'
             );
         }
     }

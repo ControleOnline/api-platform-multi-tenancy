@@ -21,7 +21,7 @@ final class TenancyController
         return new JsonResponse([
             'items' => $this->tenancyRegistryService->list([
                 'search' => $request->query->get('search', ''),
-                'instalation_status' => $request->query->get('instalation_status', ''),
+                'installation_status' => $request->query->get('installation_status', ''),
             ]),
         ]);
     }

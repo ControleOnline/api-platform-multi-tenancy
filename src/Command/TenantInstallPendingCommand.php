@@ -15,7 +15,7 @@ use Symfony\Component\Lock\LockFactory;
 
 #[AsCommand(
     name: 'tenant:install:pending',
-    description: 'Instala tenants pendentes registrados na tabela master databases.',
+    description: 'Instala tenants pendentes registrados na tabela master tenancies.',
 )]
 final class TenantInstallPendingCommand extends Command
 {
@@ -93,15 +93,15 @@ final class TenantInstallPendingCommand extends Command
 
     private function ensureInstallColumns(): void
     {
-        if (!$this->columnExists('instalation_status')) {
+        if (!$this->columnExists('installation_status')) {
             $this->connection->executeStatement(
-                'ALTER TABLE `databases`
-                 ADD `instalation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending"'
+                'ALTER TABLE `tenancies`
+                 ADD `installation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending"'
             );
             $this->connection->executeStatement(
-                'UPDATE `databases`
-                 SET `instalation_status` = "installed"
-                 WHERE `instalation_status` = "pending"'
+                'UPDATE `tenancies`
+                 SET `installation_status` = "installed"
+                 WHERE `installation_status` = "pending"'
             );
         }
     }
@@ -114,7 +114,7 @@ final class TenantInstallPendingCommand extends Command
              WHERE TABLE_SCHEMA = DATABASE()
                AND TABLE_NAME = ?
                AND COLUMN_NAME = ?',
-            ['databases', $columnName]
+            ['tenancies', $columnName]
         ) > 0;
     }
 
@@ -124,7 +124,7 @@ final class TenantInstallPendingCommand extends Command
     private function findPendingTenants(int $limit, string $domain = ''): array
     {
         $where = [
-            '`instalation_status` = "pending"',
+            '`installation_status` = "pending"',
         ];
         $params = [];
         $types = [];
@@ -138,7 +138,7 @@ final class TenantInstallPendingCommand extends Command
         return $this->connection->executeQuery(
             sprintf(
                 'SELECT `id`, `app_host`
-                 FROM `databases`
+                 FROM `tenancies`
                  WHERE %s
                  ORDER BY `id`
                  LIMIT %d',
@@ -153,10 +153,10 @@ final class TenantInstallPendingCommand extends Command
     private function claimTenant(int $id): bool
     {
         return $this->connection->executeStatement(
-            'UPDATE `databases`
-             SET `instalation_status` = "installing"
+            'UPDATE `tenancies`
+             SET `installation_status` = "installing"
              WHERE `id` = :id
-               AND `instalation_status` = "pending"',
+               AND `installation_status` = "pending"',
             [
                 'id' => $id,
             ],
@@ -211,8 +211,8 @@ final class TenantInstallPendingCommand extends Command
     private function markInstalled(string $domain): void
     {
         $this->connection->executeStatement(
-            'UPDATE `databases`
-             SET `instalation_status` = "installed"
+            'UPDATE `tenancies`
+             SET `installation_status` = "installed"
              WHERE `app_host` = :domain',
             ['domain' => $domain],
             ['domain' => ParameterType::STRING]
@@ -222,8 +222,8 @@ final class TenantInstallPendingCommand extends Command
     private function markFailed(string $domain): void
     {
         $this->connection->executeStatement(
-            'UPDATE `databases`
-             SET `instalation_status` = "failed"
+            'UPDATE `tenancies`
+             SET `installation_status` = "failed"
              WHERE `app_host` = :domain',
             ['domain' => $domain],
             ['domain' => ParameterType::STRING]

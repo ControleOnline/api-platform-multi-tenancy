@@ -38,10 +38,10 @@ class TenancyRegistryService
             $types['search'] = ParameterType::STRING;
         }
 
-        $status = trim((string) ($filters['instalation_status'] ?? ''));
+        $status = trim((string) ($filters['installation_status'] ?? ''));
         if ($status !== '') {
             $status = $this->normalizeStatus($status);
-            $where[] = $this->columnExpression('instalation_status') . ' = :status';
+            $where[] = $this->columnExpression('installation_status') . ' = :status';
             $params['status'] = $status;
             $types['status'] = ParameterType::STRING;
         }
@@ -85,7 +85,7 @@ class TenancyRegistryService
 
         $data = $this->normalizePayload($payload);
         $existingId = $this->connection->fetchOne(
-            'SELECT `id` FROM `databases` WHERE `app_host` = :app_host LIMIT 1',
+            'SELECT `id` FROM `tenancies` WHERE `app_host` = :app_host LIMIT 1',
             ['app_host' => $data['app_host']],
             ['app_host' => ParameterType::STRING]
         );
@@ -114,64 +114,29 @@ class TenancyRegistryService
 
         $sets = [
             '`app_host` = :app_host',
-            '`instalation_status` = :instalation_status',
+            '`installation_status` = :installation_status',
         ];
         $params = [
             'app_host' => $data['app_host'],
-            'instalation_status' => $data['instalation_status'],
+            'installation_status' => $data['installation_status'],
             'id' => $id,
         ];
         $types = [
             'app_host' => ParameterType::STRING,
-            'instalation_status' => ParameterType::STRING,
+            'installation_status' => ParameterType::STRING,
             'id' => ParameterType::INTEGER,
         ];
 
-        if ($this->hasNormalizedConnectionSchema()) {
-            $sets[] = '`database_connection_id` = :database_connection_id';
-            $params['database_connection_id'] = $this->findOrCreateDatabaseConnection(
-                $data,
-                array_key_exists('db_password', $payload) ? trim((string) $payload['db_password']) : null
-            );
-            $types['database_connection_id'] = ParameterType::INTEGER;
-        } else {
-            $sets = array_merge($sets, [
-                '`db_host` = :db_host',
-                '`db_name` = :db_name',
-                '`db_port` = :db_port',
-                '`db_user` = :db_user',
-                '`db_driver` = :db_driver',
-                '`db_instance` = :db_instance',
-            ]);
-            $params += [
-                'db_host' => $data['db_host'],
-                'db_name' => $data['db_name'],
-                'db_port' => $data['db_port'],
-                'db_user' => $data['db_user'],
-                'db_driver' => $data['db_driver'],
-                'db_instance' => $data['db_instance'],
-            ];
-            $types += [
-                'db_host' => ParameterType::STRING,
-                'db_name' => ParameterType::STRING,
-                'db_port' => ParameterType::INTEGER,
-                'db_user' => ParameterType::STRING,
-                'db_driver' => ParameterType::STRING,
-                'db_instance' => $data['db_instance'] === null ? ParameterType::NULL : ParameterType::STRING,
-            ];
-
-            if (array_key_exists('db_password', $payload) && trim((string) $payload['db_password']) !== '') {
-                $sets[] = '`db_password` = AES_ENCRYPT(:db_password, :tenancy_secret)';
-                $params['db_password'] = trim((string) $payload['db_password']);
-                $params['tenancy_secret'] = $this->getTenancySecret();
-                $types['db_password'] = ParameterType::STRING;
-                $types['tenancy_secret'] = ParameterType::STRING;
-            }
-        }
+        $sets[] = '`server_id` = :server_id';
+        $params['server_id'] = $this->findOrCreateConnectionServer(
+            $data,
+            array_key_exists('db_password', $payload) ? trim((string) $payload['db_password']) : null
+        );
+        $types['server_id'] = ParameterType::INTEGER;
 
         $this->connection->executeStatement(
             sprintf(
-                'UPDATE `databases` SET %s WHERE `id` = :id',
+                'UPDATE `tenancies` SET %s WHERE `id` = :id',
                 implode(', ', $sets)
             ),
             $params,
@@ -187,7 +152,7 @@ class TenancyRegistryService
         $this->ensureInstallColumn();
 
         $this->connection->executeStatement(
-            'UPDATE `databases` SET `instalation_status` = "pending" WHERE `id` = :id',
+            'UPDATE `tenancies` SET `installation_status` = "pending" WHERE `id` = :id',
             ['id' => $id],
             ['id' => ParameterType::INTEGER]
         );
@@ -201,8 +166,8 @@ class TenancyRegistryService
             'SELECT COUNT(*)
              FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE()
-               AND TABLE_NAME = "databases"
-               AND COLUMN_NAME = "instalation_status"'
+               AND TABLE_NAME = "tenancies"
+               AND COLUMN_NAME = "installation_status"'
         ) > 0;
 
         if ($exists) {
@@ -210,11 +175,11 @@ class TenancyRegistryService
         }
 
         $this->connection->executeStatement(
-            'ALTER TABLE `databases`
-             ADD `instalation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending"'
+            'ALTER TABLE `tenancies`
+             ADD `installation_status` ENUM("pending", "installing", "installed", "failed") NOT NULL DEFAULT "pending"'
         );
         $this->connection->executeStatement(
-            'UPDATE `databases` SET `instalation_status` = "installed" WHERE `instalation_status` = "pending"'
+            'UPDATE `tenancies` SET `installation_status` = "installed" WHERE `installation_status` = "pending"'
         );
     }
 
@@ -228,7 +193,7 @@ class TenancyRegistryService
             'db_user' => $this->requireText($payload['db_user'] ?? $payload['dbUser'] ?? $current['dbUser'] ?? '', 'db_user is required.'),
             'db_driver' => $this->normalizeDriver($payload['db_driver'] ?? $payload['dbDriver'] ?? $current['dbDriver'] ?? 'pdo_mysql'),
             'db_instance' => $this->normalizeNullableText($payload['db_instance'] ?? $payload['dbInstance'] ?? $current['dbInstance'] ?? null),
-            'instalation_status' => $this->normalizeStatus($payload['instalation_status'] ?? $payload['instalationStatus'] ?? $current['instalationStatus'] ?? 'pending'),
+            'installation_status' => $this->normalizeStatus($payload['installation_status'] ?? $payload['installationStatus'] ?? $current['installationStatus'] ?? 'pending'),
         ];
 
         if ($requirePassword) {
@@ -242,7 +207,7 @@ class TenancyRegistryService
     {
         return [
             'id' => (int) $row['id'],
-            'databaseConnectionId' => (int) ($row['database_connection_id'] ?? 0),
+            'serverId' => (int) ($row['server_id'] ?? 0),
             'appHost' => (string) $row['app_host'],
             'dbHost' => (string) $row['db_host'],
             'dbName' => (string) $row['db_name'],
@@ -250,156 +215,112 @@ class TenancyRegistryService
             'dbUser' => (string) $row['db_user'],
             'dbDriver' => (string) $row['db_driver'],
             'dbInstance' => (string) ($row['db_instance'] ?? ''),
-            'instalationStatus' => (string) ($row['instalation_status'] ?? 'pending'),
+            'installationStatus' => (string) ($row['installation_status'] ?? 'pending'),
         ];
     }
 
     private function buildTenancySelectSql(): string
     {
-        if ($this->hasNormalizedConnectionSchema()) {
-            return 'SELECT
-                    databases.`id`,
-                    databases.`database_connection_id`,
-                    databases.`app_host`,
-                    database_connections.`db_host`,
-                    database_connections.`db_name`,
-                    database_connections.`db_port`,
-                    database_connections.`db_user`,
-                    database_connections.`db_driver`,
-                    database_connections.`db_instance`,
-                    databases.`instalation_status`
-                FROM `databases`
-                INNER JOIN `database_connections`
-                    ON database_connections.`id` = databases.`database_connection_id`';
-        }
-
         return 'SELECT
-                `id`,
-                NULL AS `database_connection_id`,
-                `app_host`,
-                `db_host`,
-                `db_name`,
-                `db_port`,
-                `db_user`,
-                `db_driver`,
-                `db_instance`,
-                `instalation_status`
-            FROM `databases`';
+                tenancies.`id`,
+                tenancies.`server_id`,
+                tenancies.`app_host`,
+                servers.`host` AS `db_host`,
+                servers.`db_name`,
+                servers.`port` AS `db_port`,
+                servers.`user` AS `db_user`,
+                servers.`driver` AS `db_driver`,
+                servers.`db_instance`,
+                tenancies.`installation_status`
+            FROM `tenancies`
+            INNER JOIN `servers`
+                ON servers.`id` = tenancies.`server_id`';
     }
 
     private function columnExpression(string $columnName): string
     {
-        if ($this->hasNormalizedConnectionSchema()) {
-            return match ($columnName) {
-                'id', 'app_host', 'database_connection_id', 'instalation_status' => 'databases.`' . $columnName . '`',
-                default => 'database_connections.`' . $columnName . '`',
-            };
-        }
-
-        return '`' . $columnName . '`';
+        return match ($columnName) {
+            'id', 'app_host', 'server_id', 'installation_status' => 'tenancies.`' . $columnName . '`',
+            'db_host' => 'servers.`host`',
+            'db_port' => 'servers.`port`',
+            'db_user' => 'servers.`user`',
+            'db_driver' => 'servers.`driver`',
+            default => 'servers.`' . $columnName . '`',
+        };
     }
 
     private function buildInsertSql(array $data): string
     {
-        if ($this->hasNormalizedConnectionSchema()) {
-            return 'INSERT INTO `databases`
-                    (`app_host`, `database_connection_id`, `instalation_status`)
-                 VALUES
-                    (:app_host, :database_connection_id, :instalation_status)';
-        }
-
-        return 'INSERT INTO `databases`
-                (`app_host`, `db_host`, `db_name`, `db_port`, `db_user`, `db_password`, `db_driver`, `db_instance`, `instalation_status`)
+        return 'INSERT INTO `tenancies`
+                (`app_host`, `server_id`, `installation_status`)
              VALUES
-                (:app_host, :db_host, :db_name, :db_port, :db_user, AES_ENCRYPT(:db_password, :tenancy_secret), :db_driver, :db_instance, :instalation_status)';
+                (:app_host, :server_id, :installation_status)';
     }
 
     private function buildInsertParams(array $data): array
     {
-        if ($this->hasNormalizedConnectionSchema()) {
-            return [
-                'app_host' => $data['app_host'],
-                'database_connection_id' => $this->findOrCreateDatabaseConnection($data, $data['db_password'] ?? null),
-                'instalation_status' => $data['instalation_status'],
-            ];
-        }
-
         return [
-            ...$data,
-            'tenancy_secret' => $this->getTenancySecret(),
+            'app_host' => $data['app_host'],
+            'server_id' => $this->findOrCreateConnectionServer($data, $data['db_password'] ?? null),
+            'installation_status' => $data['installation_status'],
         ];
     }
 
     private function buildInsertTypes(array $data): array
     {
-        if ($this->hasNormalizedConnectionSchema()) {
-            return [
-                'app_host' => ParameterType::STRING,
-                'database_connection_id' => ParameterType::INTEGER,
-                'instalation_status' => ParameterType::STRING,
-            ];
-        }
-
         return [
             'app_host' => ParameterType::STRING,
-            'db_host' => ParameterType::STRING,
-            'db_name' => ParameterType::STRING,
-            'db_port' => ParameterType::INTEGER,
-            'db_user' => ParameterType::STRING,
-            'db_password' => ParameterType::STRING,
-            'db_driver' => ParameterType::STRING,
-            'db_instance' => $data['db_instance'] === null ? ParameterType::NULL : ParameterType::STRING,
-            'instalation_status' => ParameterType::STRING,
-            'tenancy_secret' => ParameterType::STRING,
+            'server_id' => ParameterType::INTEGER,
+            'installation_status' => ParameterType::STRING,
         ];
     }
 
-    private function findOrCreateDatabaseConnection(array $data, ?string $password = null): int
+    private function findOrCreateConnectionServer(array $data, ?string $password = null): int
     {
-        $this->ensureConnectionSchema();
+        $this->ensureServerConnectionSchema();
+        $connectionHash = $this->buildConnectionHash($data);
 
         $params = [
-            'connection_hash' => $this->buildConnectionHash($data),
-            'db_driver' => $data['db_driver'],
-            'db_host' => $data['db_host'],
+            'connection_hash' => $connectionHash,
+            'driver' => $data['db_driver'],
+            'host' => $data['db_host'],
             'db_name' => $data['db_name'],
-            'db_user' => $data['db_user'],
-            'db_port' => $data['db_port'],
-            'db_instance' => $data['db_instance'] ?? '',
+            'db_instance' => $data['db_instance'] ?? null,
+            'port' => $data['db_port'],
+            'user' => $data['db_user'],
         ];
         $types = [
             'connection_hash' => ParameterType::STRING,
-            'db_driver' => ParameterType::STRING,
-            'db_host' => ParameterType::STRING,
+            'driver' => ParameterType::STRING,
+            'host' => ParameterType::STRING,
             'db_name' => ParameterType::STRING,
-            'db_user' => ParameterType::STRING,
-            'db_port' => ParameterType::INTEGER,
-            'db_instance' => ParameterType::STRING,
+            'db_instance' => $params['db_instance'] === null ? ParameterType::NULL : ParameterType::STRING,
+            'port' => ParameterType::INTEGER,
+            'user' => ParameterType::STRING,
         ];
 
         $existingId = $this->connection->fetchOne(
             'SELECT `id`
-             FROM `database_connections`
+             FROM `servers`
              WHERE `connection_hash` = :connection_hash
              LIMIT 1',
-            $params,
-            $types
+            ['connection_hash' => $params['connection_hash']],
+            ['connection_hash' => ParameterType::STRING]
         );
 
         if ($existingId) {
             if ($password !== null && trim($password) !== '') {
                 $this->connection->executeStatement(
-                    'UPDATE `database_connections`
-                     SET `db_password` = AES_ENCRYPT(:db_password, :tenancy_secret),
-                         `updated_at` = NOW()
+                    'UPDATE `servers`
+                     SET `password` = AES_ENCRYPT(:password, :tenancy_secret)
                      WHERE `id` = :id',
                     [
-                        'db_password' => trim($password),
+                        'password' => trim($password),
                         'tenancy_secret' => $this->getTenancySecret(),
                         'id' => (int) $existingId,
                     ],
                     [
-                        'db_password' => ParameterType::STRING,
+                        'password' => ParameterType::STRING,
                         'tenancy_secret' => ParameterType::STRING,
                         'id' => ParameterType::INTEGER,
                     ]
@@ -411,35 +332,35 @@ class TenancyRegistryService
 
         $password = trim((string) $password);
         if ($password === '') {
-            throw new BadRequestHttpException('db_password is required for a new database connection.');
+            throw new BadRequestHttpException('db_password is required for a new server connection.');
         }
 
         $this->connection->executeStatement(
-            'INSERT INTO `database_connections` (
-                `db_driver`,
-                `db_instance`,
-                `db_port`,
-                `db_host`,
+            'INSERT INTO `servers` (
+                `driver`,
+                `port`,
+                `host`,
                 `db_name`,
-                `db_user`,
-                `db_password`,
+                `db_instance`,
+                `user`,
+                `password`,
                 `connection_hash`
              ) VALUES (
-                :db_driver,
-                :db_instance,
-                :db_port,
-                :db_host,
+                :driver,
+                :port,
+                :host,
                 :db_name,
-                :db_user,
-                AES_ENCRYPT(:db_password, :tenancy_secret),
+                :db_instance,
+                :user,
+                AES_ENCRYPT(:password, :tenancy_secret),
                 :connection_hash
              )',
             $params + [
-                'db_password' => $password,
+                'password' => $password,
                 'tenancy_secret' => $this->getTenancySecret(),
             ],
             $types + [
-                'db_password' => ParameterType::STRING,
+                'password' => ParameterType::STRING,
                 'tenancy_secret' => ParameterType::STRING,
             ]
         );
@@ -459,17 +380,19 @@ class TenancyRegistryService
         ]));
     }
 
-    private function ensureConnectionSchema(): void
+    private function ensureServerConnectionSchema(): void
     {
-        if (!$this->hasNormalizedConnectionSchema()) {
-            throw new BadRequestHttpException('database_connections schema is not available.');
+        if (!$this->hasServerConnectionSchema()) {
+            throw new BadRequestHttpException('servers connection schema is not available.');
         }
     }
 
-    private function hasNormalizedConnectionSchema(): bool
+    private function hasServerConnectionSchema(): bool
     {
-        return $this->tableExists('database_connections')
-            && $this->columnExists('databases', 'database_connection_id');
+        return $this->tableExists('servers')
+            && $this->columnExists('tenancies', 'server_id')
+            && $this->columnExists('servers', 'db_name')
+            && $this->columnExists('servers', 'connection_hash');
     }
 
     private function tableExists(string $tableName): bool
@@ -535,7 +458,7 @@ class TenancyRegistryService
     {
         $status = strtolower(trim((string) $value)) ?: 'pending';
         if (!in_array($status, self::INSTALLATION_STATUSES, true)) {
-            throw new BadRequestHttpException('instalation_status is invalid.');
+            throw new BadRequestHttpException('installation_status is invalid.');
         }
 
         return $status;
