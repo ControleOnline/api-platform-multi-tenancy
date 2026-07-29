@@ -31,7 +31,7 @@ class DatabaseSwitchListener
     private function shouldLetControllerSwitchDatabase(RequestEvent $event): bool
     {
         return preg_match(
-            '#^/[^/]+/mercadolivre/oauth/return$#',
+            '#^/oauth/mercadolivre/return$#',
             $event->getRequest()->getPathInfo()
         ) === 1;
     }
