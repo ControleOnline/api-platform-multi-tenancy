@@ -19,6 +19,10 @@ class DatabaseSwitchListener
             return;
         }
 
+        if ($event->getRequest()->isMethod('OPTIONS')) {
+            return;
+        }
+
         if ($this->shouldLetControllerSwitchDatabase($event)) {
             return;
         }
