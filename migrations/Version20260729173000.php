@@ -217,6 +217,15 @@ final class Version20260729173000 extends AbstractMigration
             ],
             [
                 'scope' => 'tenant',
+                'title' => 'Servidor WebSocket por tenant',
+                'description' => 'Mantem o servidor WebSocket ativo para o tenant.',
+                'enabled' => true,
+                'cronExpression' => '* * * * *',
+                'command' => 'websocket:start',
+                'arguments' => ['--port=8080'],
+            ],
+            [
+                'scope' => 'tenant',
                 'title' => 'Integracoes por tenant',
                 'description' => 'Processa a fila de integracoes dentro de cada tenant instalado.',
                 'enabled' => true,
