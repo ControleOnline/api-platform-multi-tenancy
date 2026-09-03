@@ -16,9 +16,10 @@ final class Version20260903120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        if ($schema->hasTable('cron_jobs')) {
-            $this->addSql("DELETE FROM `cron_jobs` WHERE `command` = 'tenant:integration:start'");
-        }
+        // Version20260729173000 creates/normalizes cron_jobs before this cleanup.
+        // Avoid DBAL schema introspection here: legacy MySQL ENUM columns are not
+        // portable across the DBAL versions used by the supported installations.
+        $this->addSql("DELETE FROM `cron_jobs` WHERE `command` = 'tenant:integration:start'");
     }
 
     public function down(Schema $schema): void
