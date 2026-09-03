@@ -139,6 +139,26 @@ class DatabaseSwitchService
     }
 
     /**
+     * Returns one representative domain per tenant database.
+     * Multiple hostnames can point to the same server/database and must not
+     * cause duplicate worker rotations.
+     *
+     * @return array<int, array{tenant_id: int, app_host: string}>
+     */
+    public function getAllTenantDomains(): array
+    {
+        $this->switchBackToOriginalDatabase();
+
+        return $this->connection->executeQuery(
+            'SELECT MIN(`id`) AS `tenant_id`, MIN(`app_host`) AS `app_host`
+             FROM `tenancies`
+             WHERE TRIM(COALESCE(`app_host`, "")) <> ""
+             GROUP BY `server_id`
+             ORDER BY MIN(`id`) ASC'
+        )->fetchAllAssociative();
+    }
+
+    /**
      * @param array $dbData
      * @return mixed
      */
