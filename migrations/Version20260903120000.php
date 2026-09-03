@@ -16,7 +16,7 @@ final class Version20260903120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        if ($this->tableExists('cron_jobs')) {
+        if ($schema->hasTable('cron_jobs')) {
             $this->addSql("DELETE FROM `cron_jobs` WHERE `command` = 'tenant:integration:start'");
         }
     }
