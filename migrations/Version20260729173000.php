@@ -226,15 +226,6 @@ final class Version20260729173000 extends AbstractMigration
             ],
             [
                 'scope' => 'tenant',
-                'title' => 'Integracoes por tenant',
-                'description' => 'Processa a fila de integracoes dentro de cada tenant instalado.',
-                'enabled' => true,
-                'cronExpression' => '* * * * *',
-                'command' => 'tenant:integration:start',
-                'arguments' => [],
-            ],
-            [
-                'scope' => 'tenant',
                 'title' => 'Importacoes por tenant',
                 'description' => 'Processa a fila de importacoes dentro de cada tenant instalado.',
                 'enabled' => true,
