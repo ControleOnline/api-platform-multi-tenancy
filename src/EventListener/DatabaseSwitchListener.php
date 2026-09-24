@@ -5,14 +5,9 @@ namespace ControleOnline\EventListener;
 use ControleOnline\Service\DatabaseSwitchService;
 use ControleOnline\Service\DomainService;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Exception;
 
 class DatabaseSwitchListener
 {
-    private $domain;
-    private static $tenancy_params;
-
-
     public function __construct(
         private DatabaseSwitchService $databaseSwitchService,
         private DomainService $domainService
@@ -20,14 +15,28 @@ class DatabaseSwitchListener
 
     public function onKernelRequest(RequestEvent $event)
     {
-        try {
-            
-            if (!self::$tenancy_params && $_ENV['MULTI_TENANCY'])
-                self::$tenancy_params = $this->databaseSwitchService->switchDatabaseByDomain(
-                    $this->domainService->getDomain()
-                );
-        } catch (Exception $e) {
-            throw new Exception(sprintf('%s', $e), 1);
+        if (!$_ENV['MULTI_TENANCY']) {
+            return;
         }
+
+        if ($event->getRequest()->isMethod('OPTIONS')) {
+            return;
+        }
+
+        if ($this->shouldLetControllerSwitchDatabase($event)) {
+            return;
+        }
+
+        $this->databaseSwitchService->switchDatabaseByDomain(
+            $this->domainService->getDomain()
+        );
+    }
+
+    private function shouldLetControllerSwitchDatabase(RequestEvent $event): bool
+    {
+        return preg_match(
+            '#^(?:/oauth/mercadolivre/return|/[^/]+/oauth/mercadolivre/notifications)$#',
+            $event->getRequest()->getPathInfo()
+        ) === 1;
     }
 }
