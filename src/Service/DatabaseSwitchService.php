@@ -1,5 +1,20 @@
 <?php
 
+/*
+ * Contract imported from AGENTS.md
+ * ## Escopo
+ * - Modulo de multi-tenancy da API.
+ * - Cobre troca de banco, mudanca de tenant, listeners e comandos de migracao por tenant.
+ *
+ * ## Quando usar
+ * - Prompts sobre tenant, database switching, migracao de tenants e isolamento por base.
+ *
+ * ## Limites
+ * - Alteracoes aqui sao sensiveis e impactam toda a API.
+ * - Nao misturar regra de dominio de negocio com a infraestrutura de tenant.
+ */
+
+
 namespace ControleOnline\Service;
 
 use Doctrine\DBAL\Connection;
@@ -7,6 +22,7 @@ use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Types\Type;
 use InvalidArgumentException;
+use RuntimeException;
 
 class DatabaseSwitchService
 {
@@ -38,15 +54,12 @@ class DatabaseSwitchService
     public function switchDatabaseByDomain($domain)
     {
 
-        // AleMac // 25/11/25
-        // $this->switchDatabase($this->getDbData($domain));
-        // Só troca o banco se existir tenant para aquele domínio.
         $dbData = $this->getDbData($domain);
 
         if (!$dbData) {
-            // Nenhum tenant → NÃO trocar banco
-            return;
+            throw new RuntimeException(sprintf('Tenant "%s" not found.', $domain));
         }
+
         $this->switchDatabase($dbData);
 
     }
@@ -89,9 +102,18 @@ class DatabaseSwitchService
     {
         $this->switchBackToOriginalDatabase();
         $params = $this->connection->getParams();
-        $sql = 'SELECT db_host, db_name, db_port, db_user, db_driver, db_instance, 
-            AES_DECRYPT(db_password, :tenancy_secret) AS db_password
-            FROM `databases` WHERE app_host = :app_host';
+        $sql = 'SELECT
+                servers.host AS db_host,
+                servers.db_name,
+                servers.port AS db_port,
+                servers.user AS db_user,
+                servers.driver AS db_driver,
+                servers.db_instance,
+                AES_DECRYPT(servers.password, :tenancy_secret) AS db_password
+            FROM `tenancies`
+            INNER JOIN `servers`
+                ON servers.id = tenancies.server_id
+            WHERE tenancies.app_host = :app_host';
 
         $statement = $this->connection->executeQuery(
             $sql,
@@ -104,13 +126,9 @@ class DatabaseSwitchService
 
         $result = $statement->fetchAssociative();
 
-        // AleMac // 25/11/25
-        // Se a consulta não encontrar domínio, 
-        // retorna false em vez de tentar acessar
         if (!$result) {
-            return false; // nenhum tenant encontrado
+            return false;
         }
-        //
 
         $params['platform'] = $this->getPlatform($result['db_driver']);
         $params['host'] = $result['db_host'];
@@ -131,7 +149,7 @@ class DatabaseSwitchService
     public function getAllDomains()
     {
         $this->switchBackToOriginalDatabase();
-        $sql = 'SELECT app_host FROM `databases`';
+        $sql = 'SELECT app_host FROM `tenancies`';
         $statement = $this->connection->executeQuery($sql);
         $results = $statement->fetchAllAssociative();
         $domains = array_column($results, 'app_host');
@@ -156,6 +174,54 @@ class DatabaseSwitchService
              GROUP BY `server_id`
              ORDER BY MIN(`id`) ASC'
         )->fetchAllAssociative();
+    }
+
+    /**
+     * @param string $domain
+     * @return array|false
+     * @throws \Doctrine\DBAL\Driver\Exception
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function getTenantConnectionInfo($domain)
+    {
+        $currentParams = $this->connection->getParams();
+        $this->switchBackToOriginalDatabase();
+
+        try {
+            $statement = $this->connection->executeQuery(
+                'SELECT
+                    tenancies.app_host,
+                    servers.host AS db_host,
+                    servers.db_name,
+                    servers.port AS db_port,
+                    servers.driver AS db_driver,
+                    servers.db_instance
+                 FROM `tenancies`
+                 INNER JOIN `servers`
+                    ON servers.id = tenancies.server_id
+                 WHERE tenancies.app_host = :app_host
+                 LIMIT 1',
+                ['app_host' => $domain],
+                ['app_host' => Type::getType('string')]
+            );
+
+            $result = $statement->fetchAssociative();
+        } finally {
+            $this->switchDatabase($currentParams);
+        }
+
+        if (!$result) {
+            return false;
+        }
+
+        return [
+            'app_host' => $result['app_host'] ?? $domain,
+            'db_host' => $result['db_host'] ?? null,
+            'db_name' => $result['db_name'] ?? null,
+            'db_port' => $result['db_port'] ?? null,
+            'db_driver' => $result['db_driver'] ?? null,
+            'db_instance' => $result['db_instance'] ?? null,
+        ];
     }
 
     /**
@@ -195,5 +261,4 @@ class DatabaseSwitchService
         }
     }
 
-  
 }

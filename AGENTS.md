@@ -1,10 +1,6 @@
-## Escopo
-- Modulo de multi-tenancy da API.
-- Cobre troca de banco, mudanca de tenant, listeners e comandos de migracao por tenant.
+## Ponto de entrada
 
-## Quando usar
-- Prompts sobre tenant, database switching, migracao de tenants e isolamento por base.
-
-## Limites
-- Alteracoes aqui sao sensiveis e impactam toda a API.
-- Nao misturar regra de dominio de negocio com a infraestrutura de tenant.
+- A documentação funcional e de regras deste modulo vive na wiki do proprio repositório e na wiki principal da API.
+- Regras transversais de qualidade, modularizacao e limites de componente vivem em `https://github.com/ControleOnline/agents-mcp/blob/master/skills/shared/code-quality.md`.
+- Quando houver detalhe especifico de implementacao, prefira comentar no codigo em ingles perto da regra.
+- Este arquivo deve ficar curto e servir apenas como ponte para as fontes oficiais.
