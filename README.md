@@ -3,29 +3,11 @@
 # multi-tenancy
 
 
-`composer require controleonline/multi-tenancy:dev-master`
+## Instalacao
+[Instalacao na wiki](https://github.com/ControleOnline/api-platform-multi-tenancy/wiki/Instalacao)
 
+## Links obrigatorios
 
-Add Service import:
-config\services.yaml
-
-```yaml
-imports:
-    - { resource: "../vendor/controleonline/multi-tenancy/config/config.yaml" }    
-```
-
-Add 'app-domain' a header on CORS:
-config\packages\nelmio_cors.yaml
-
-```yaml
-nelmio_cors:
-    defaults:
-        origin_regex: true
-        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
-        allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-        allow_headers: ['Content-Type', 'Authorization', 'API-TOKEN','app-domain','DEVICE']
-        expose_headers: ['Link']
-        max_age: 3600
-    paths:
-        '^/': ~
-```
+- [Documentacao para clientes](http://ajuda.controleonline.com/)
+- [Site institucional](http://controleonline.com/)
+- [Wiki tecnica](https://github.com/ControleOnline/api-platform-multi-tenancy/wiki)
